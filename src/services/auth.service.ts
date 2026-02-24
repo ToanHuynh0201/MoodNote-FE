@@ -1,5 +1,6 @@
 // Authentication API calls (FR-01 to FR-04)
 
+import api from "@/lib/api";
 import type { ApiResponse } from "@/types/api.types";
 import type {
 	AuthTokens,
@@ -10,7 +11,6 @@ import type {
 	RegisterPayload,
 	User,
 } from "@/types/user.types";
-import api from "./api";
 
 export const authService = {
 	// FR-02: Login with email + password

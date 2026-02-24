@@ -1,3 +1,4 @@
+import { AuthProvider } from "@/contexts/AuthContext";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import {
 	DarkTheme,
@@ -42,12 +43,14 @@ function RootLayoutNav() {
 	const colorScheme = useColorScheme();
 
 	return (
-		<ThemeProvider
-			value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-			<Stack screenOptions={{ headerShown: false }}>
-				<Stack.Screen name="(auth)" />
-				<Stack.Screen name="(app)" />
-			</Stack>
-		</ThemeProvider>
+		<AuthProvider>
+			<ThemeProvider
+				value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+				<Stack screenOptions={{ headerShown: false }}>
+					<Stack.Screen name="(auth)" />
+					<Stack.Screen name="(app)" />
+				</Stack>
+			</ThemeProvider>
+		</AuthProvider>
 	);
 }
