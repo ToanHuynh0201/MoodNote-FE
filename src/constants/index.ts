@@ -58,11 +58,14 @@ export const ROUTES = {
 	HOME: "/(app)" as const,
 };
 
+export const THEME_STORAGE_KEY = "moodnote_theme";
+
 export default {
 	API_CONFIG,
 	AUTH_CONFIG,
 	ERROR_CODES,
 	ERROR_MESSAGES,
+	THEME_STORAGE_KEY,
 };
 
 export * from "./Colors";
