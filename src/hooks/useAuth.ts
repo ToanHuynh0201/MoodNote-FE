@@ -1,5 +1,6 @@
-import { AuthContext } from "@/contexts/AuthContext";
 import { useContext } from "react";
+
+import { AuthContext } from "@/contexts";
 
 // Custom hook to use auth context
 export const useAuth = () => {

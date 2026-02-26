@@ -18,10 +18,14 @@ export interface LoginPayload {
 	password: string;
 }
 
+/**
+ * API payload for registration — `confirmPassword` is stripped before sending.
+ * The form collects `RegisterFormValues` (from auth.schemas.ts) which includes
+ * `confirmPassword` for UI validation, then omits it before calling the API.
+ */
 export interface RegisterPayload {
 	email: string;
 	password: string;
-	confirmPassword: string;
 }
 
 export interface ForgotPasswordPayload {
@@ -32,8 +36,4 @@ export interface ChangePasswordPayload {
 	currentPassword: string;
 	newPassword: string;
 	confirmPassword: string;
-}
-
-export interface RefreshTokenPayload {
-	refreshToken: string;
 }

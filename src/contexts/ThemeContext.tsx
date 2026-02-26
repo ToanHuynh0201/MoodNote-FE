@@ -1,10 +1,4 @@
-import {
-	createContext,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from "react";
+import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import { useColorScheme } from "react-native";
 
 import { THEME_STORAGE_KEY } from "@/constants";
@@ -71,7 +65,5 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 		[colorScheme, setTheme, toggleTheme],
 	);
 
-	return (
-		<ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
-	);
+	return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

@@ -47,8 +47,7 @@ export const getStorageItem = async <T = unknown>(
  */
 export const setStorageItem = async (key: string, value: unknown) => {
 	try {
-		const stringValue =
-			typeof value === "string" ? value : JSON.stringify(value);
+		const stringValue = typeof value === "string" ? value : JSON.stringify(value);
 		await SecureStore.setItemAsync(key, stringValue);
 		return true;
 	} catch (error) {

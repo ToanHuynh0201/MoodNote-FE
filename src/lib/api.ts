@@ -1,4 +1,5 @@
-import { API_CONFIG, AUTH_CONFIG } from "@/constants";
+import { API_CONFIG, AUTH_CONFIG, ROUTES } from "@/constants";
+import type { ApiResponse } from "@/types";
 import {
 	getAuthToken,
 	getStorageItem,
@@ -11,11 +12,13 @@ import {
 	shouldLogout,
 } from "@/utils";
 
+import { router } from "expo-router";
+
 import axios, {
+	type AxiosError,
 	type AxiosInstance,
 	type AxiosRequestConfig,
 	type AxiosResponse,
-	type AxiosError,
 	type InternalAxiosRequestConfig,
 } from "axios";
 
@@ -30,8 +33,7 @@ class ApiService {
 		reject: (reason: unknown) => void;
 	}> = [];
 
-	constructor(customBaseUrl: string | null = null) {
-		// this.baseUrl = customBaseUrl || API_CONFIG.BASE_URL;
+	constructor() {
 		this.baseUrl = API_CONFIG.BASE_URL;
 		this.api = this._createAxiosInstance();
 		this._setupInterceptors();
@@ -42,7 +44,7 @@ class ApiService {
 	 * @private
 	 * @returns {axios.AxiosInstance} Configured axios instance
 	 */
-	_createAxiosInstance() {
+	private _createAxiosInstance() {
 		return axios.create({
 			baseURL: this.baseUrl,
 			timeout: API_CONFIG.TIMEOUT,
@@ -56,7 +58,7 @@ class ApiService {
 	 * Setup request and response interceptors
 	 * @private
 	 */
-	_setupInterceptors() {
+	private _setupInterceptors() {
 		this._setupRequestInterceptor();
 		this._setupResponseInterceptor();
 	}
@@ -65,14 +67,11 @@ class ApiService {
 	 * Setup request interceptor to add auth token
 	 * @private
 	 */
-	_setupRequestInterceptor() {
+	private _setupRequestInterceptor() {
 		this.api.interceptors.request.use(
 			async (config: InternalAxiosRequestConfig) => {
 				// Don't send token for login/register/refresh endpoints
-				if (
-					!this._isLoginEndpoint(config.url) &&
-					!this._isRefreshEndpoint(config.url)
-				) {
+				if (!this._isLoginEndpoint(config.url) && !this._isRefreshEndpoint(config.url)) {
 					const token = await getAuthToken();
 					if (token) {
 						config.headers.Authorization = `Bearer ${token}`;
@@ -92,7 +91,7 @@ class ApiService {
 	 * Setup response interceptor to handle auth errors
 	 * @private
 	 */
-	_setupResponseInterceptor() {
+	private _setupResponseInterceptor() {
 		this.api.interceptors.response.use(
 			(response: AxiosResponse) => response,
 			async (error: AxiosError) => {
@@ -124,9 +123,7 @@ class ApiService {
 					originalRequest._retry = true;
 					this.isRefreshing = true;
 
-					const refreshToken = await getStorageItem(
-						AUTH_CONFIG.REFRESH_TOKEN_STORAGE_KEY,
-					);
+					const refreshToken = await getStorageItem(AUTH_CONFIG.REFRESH_TOKEN_STORAGE_KEY);
 					if (!refreshToken) {
 						this.isRefreshing = false;
 						this._handleLogout();
@@ -134,29 +131,16 @@ class ApiService {
 					}
 
 					try {
-						const refreshResponse =
-							await this._performTokenRefresh(refreshToken as string);
+						const refreshResponse = await this._performTokenRefresh(refreshToken as string);
 
-						// Check response format: { code: 1000, data: { access_token, refresh_token } }
-						if (
-							refreshResponse.data.code === 1000 &&
-							refreshResponse.data.data
-						) {
-							const {
-								access_token: newAccessToken,
-								refresh_token: newRefreshToken,
-							} = refreshResponse.data.data;
-
-							await setStorageItem(
-								AUTH_CONFIG.ACCESS_TOKEN_STORAGE_KEY,
-								newAccessToken,
-							);
+						// Check response format: { success: true, data: { accessToken, refreshToken } }
+						if (refreshResponse.data.success === true && refreshResponse.data.data) {
+							const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+								refreshResponse.data.data;
+							await setStorageItem(AUTH_CONFIG.ACCESS_TOKEN_STORAGE_KEY, newAccessToken);
 
 							if (newRefreshToken) {
-								await setStorageItem(
-									AUTH_CONFIG.REFRESH_TOKEN_STORAGE_KEY,
-									newRefreshToken,
-								);
+								await setStorageItem(AUTH_CONFIG.REFRESH_TOKEN_STORAGE_KEY, newRefreshToken);
 							}
 
 							// Update auth header for original request
@@ -201,7 +185,7 @@ class ApiService {
 	 * Process queued requests after token refresh
 	 * @private
 	 */
-	_processQueue(error: unknown, token: string | null = null) {
+	private _processQueue(error: unknown, token: string | null = null) {
 		this.failedQueue.forEach((prom) => {
 			if (error) {
 				prom.reject(error);
@@ -219,7 +203,7 @@ class ApiService {
 	 * @param {string | undefined} url - Request URL
 	 * @returns {boolean} Whether URL is login endpoint
 	 */
-	_isLoginEndpoint(url: string | undefined) {
+	private _isLoginEndpoint(url: string | undefined) {
 		return url?.includes("login") || url?.includes("register");
 	}
 
@@ -229,39 +213,35 @@ class ApiService {
 	 * @param {string | undefined} url - Request URL
 	 * @returns {boolean} Whether URL is refresh endpoint
 	 */
-	_isRefreshEndpoint(url: string | undefined) {
-		return url?.includes("refresh") || url?.includes("/refresh");
+	private _isRefreshEndpoint(url: string | undefined) {
+		return url?.includes("refresh");
 	}
 
 	/**
 	 * Perform token refresh API call
 	 * @private
 	 * @param {string} refreshToken - Refresh token
-	 * @returns {Promise<Object>} Refresh response
+	 * @returns {Promise} Refresh response with new tokens
 	 */
-	async _performTokenRefresh(refreshToken: string) {
-		return axios.post(`${this.baseUrl}/auth/refresh`, {
-			refreshToken,
-		});
+	private async _performTokenRefresh(refreshToken: string) {
+		return axios.post<ApiResponse<{ accessToken: string; refreshToken: string }>>(
+			`${this.baseUrl}/auth/refresh`,
+			{ refreshToken },
+		);
 	}
 
 	/**
-	 * Handle logout by clearing storage and redirecting
+	 * Handle logout by clearing storage and redirecting to login
 	 * @private
 	 */
-	async _handleLogout() {
+	private async _handleLogout() {
 		await Promise.all([
 			removeAuthToken(),
 			removeUserData(),
 			removeStorageItem(AUTH_CONFIG.REFRESH_TOKEN_STORAGE_KEY),
 		]);
 
-		// Use expo-router for navigation instead of window.location
-		try {
-			// router.replace(ROUTES.LOGIN);
-		} catch (error) {
-			console.warn("Router not available, unable to navigate to login");
-		}
+		router.replace(ROUTES.LOGIN);
 	}
 
 	// Proxy methods to axios instance
@@ -287,6 +267,3 @@ class ApiService {
 }
 
 export const apiService = new ApiService();
-
-// * Use this for custom instances
-export { ApiService };

@@ -37,8 +37,8 @@ export const PALETTE = {
 
 	// ── Status ───────────────────────────────────────────────────────────────
 	status: {
-		errorLight: "#F87171",   // for dark backgrounds
-		errorDark: "#EF4444",    // for light backgrounds
+		errorLight: "#F87171", // for dark backgrounds
+		errorDark: "#EF4444", // for light backgrounds
 		successLight: "#4ADE80",
 		successDark: "#22C55E",
 		warningLight: "#FBD38D",
@@ -54,5 +54,28 @@ export const PALETTE = {
 	overlay: {
 		dark: "rgba(13, 5, 32, 0.50)",
 		light: "rgba(0, 0, 0, 0.40)",
+	},
+
+	// ── Info Blue ─────────────────────────────────────────────────
+	info: {
+		dark: "#74B0FF", // on dark backgrounds
+		light: "#2563EB", // on light backgrounds
+	},
+
+	// ── Brand Surface ──────────────────────────────────────────────
+	brandSurface: {
+		dark: "rgba(123, 53, 216, 0.18)", // dark theme subtle brand tint
+	},
+
+	// ── Status Backgrounds ─────────────────────────────────────────
+	statusBackground: {
+		errorDark: "rgba(248, 113, 113, 0.12)",
+		errorLight: "rgba(239, 68, 68, 0.08)",
+		successDark: "rgba(74, 222, 128, 0.12)",
+		successLight: "rgba(34, 197, 94, 0.08)",
+		warningDark: "rgba(251, 211, 141, 0.12)",
+		warningLight: "rgba(246, 173, 85, 0.08)",
+		infoDark: "rgba(116, 176, 255, 0.12)",
+		infoLight: "rgba(37, 99, 235, 0.08)",
 	},
 } as const;

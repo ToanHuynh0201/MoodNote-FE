@@ -1,11 +1,7 @@
 import { AUTH_CONFIG } from "@/constants";
+import type { RegisterFormValues } from "@/schemas";
 import { authService } from "@/services/auth.service";
-import type {
-	ForgotPasswordPayload,
-	LoginPayload,
-	RegisterPayload,
-	User,
-} from "@/types/user.types";
+import type { ForgotPasswordPayload, LoginPayload, User } from "@/types/user.types";
 import {
 	clearStorage,
 	getAuthToken,
@@ -14,13 +10,7 @@ import {
 	setStorageItem,
 	setUserData,
 } from "@/utils/storage";
-import {
-	createContext,
-	useCallback,
-	useEffect,
-	useState,
-	type ReactNode,
-} from "react";
+import { createContext, useCallback, useEffect, useState, type ReactNode } from "react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -32,7 +22,7 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
 	login: (payload: LoginPayload) => Promise<void>;
-	register: (payload: RegisterPayload) => Promise<void>;
+	register: (formValues: RegisterFormValues) => Promise<void>;
 	logout: () => Promise<void>;
 	forgotPassword: (payload: ForgotPasswordPayload) => Promise<void>;
 }
@@ -58,10 +48,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	useEffect(() => {
 		(async () => {
 			try {
-				const [token, user] = await Promise.all([
-					getAuthToken(),
-					getUserData(),
-				]);
+				const [token, user] = await Promise.all([getAuthToken(), getUserData()]);
 
 				if (token && user) {
 					setState({ user, isAuthenticated: true, isLoading: false });
@@ -80,17 +67,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 		await Promise.all([
 			setAuthToken(tokens.accessToken),
-			setStorageItem(
-				AUTH_CONFIG.REFRESH_TOKEN_STORAGE_KEY,
-				tokens.refreshToken,
-			),
+			setStorageItem(AUTH_CONFIG.REFRESH_TOKEN_STORAGE_KEY, tokens.refreshToken),
 			setUserData(user),
 		]);
 
 		setState({ user, isAuthenticated: true, isLoading: false });
 	}, []);
 
-	const register = useCallback(async (payload: RegisterPayload) => {
+	const register = useCallback(async (formValues: RegisterFormValues) => {
+		// Strip confirmPassword — only email + password are sent to the API
+		const { confirmPassword: _omit, ...payload } = formValues;
 		await authService.register(payload);
 	}, []);
 
@@ -105,16 +91,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		}
 	}, []);
 
-	const forgotPassword = useCallback(
-		async (payload: ForgotPasswordPayload) => {
-			await authService.forgotPassword(payload);
-		},
-		[],
-	);
+	const forgotPassword = useCallback(async (payload: ForgotPasswordPayload) => {
+		await authService.forgotPassword(payload);
+	}, []);
 
 	return (
-		<AuthContext.Provider
-			value={{ ...state, login, register, logout, forgotPassword }}>
+		<AuthContext.Provider value={{ ...state, login, register, logout, forgotPassword }}>
 			{children}
 		</AuthContext.Provider>
 	);

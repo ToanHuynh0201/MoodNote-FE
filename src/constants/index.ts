@@ -5,7 +5,7 @@
 // API Configuration
 export const API_CONFIG = {
 	BASE_URL: "http://localhost:3000/api/v1",
-	TIMEOUT: 100000, // 10 seconds
+	TIMEOUT: 10000, // 10 seconds
 	RETRY_ATTEMPTS: 3,
 	RETRY_DELAY: 1000,
 };
@@ -46,8 +46,7 @@ export const ERROR_MESSAGES = {
 	NOT_FOUND: "The requested resource was not found.",
 	CONFLICT: "There was a conflict with your request. Please try again.",
 	TOO_MANY_REQUESTS: "Too many requests. Please wait a moment and try again.",
-	SERVICE_UNAVAILABLE:
-		"Service is temporarily unavailable. Please try again later.",
+	SERVICE_UNAVAILABLE: "Service is temporarily unavailable. Please try again later.",
 	INTERNAL_ERROR: "An internal error occurred. Please try again later.",
 };
 
@@ -59,13 +58,3 @@ export const ROUTES = {
 };
 
 export const THEME_STORAGE_KEY = "moodnote_theme";
-
-export default {
-	API_CONFIG,
-	AUTH_CONFIG,
-	ERROR_CODES,
-	ERROR_MESSAGES,
-	THEME_STORAGE_KEY,
-};
-
-export * from "./Colors";

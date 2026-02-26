@@ -1,16 +1,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useState } from "react";
 import {
-	type Resolver,
 	type FieldValues,
 	type Path,
+	type Resolver,
 	type SubmitErrorHandler,
 	type SubmitHandler,
 	type UseFormProps,
 	type UseFormReturn,
 	useForm as useRHForm,
 } from "react-hook-form";
-import { ZodType } from "zod";
+import type { ZodType } from "zod";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -26,9 +26,7 @@ export interface UseFormOptions<TValues extends FieldValues> extends Omit<
 	onError?: SubmitErrorHandler<TValues>;
 }
 
-export interface UseFormResult<
-	TValues extends FieldValues,
-> extends UseFormReturn<TValues> {
+export interface UseFormResult<TValues extends FieldValues> extends UseFormReturn<TValues> {
 	/** Whether async onSubmit is running */
 	isSubmitting: boolean;
 	/** Server/API error message, if any */
@@ -68,8 +66,13 @@ export function useForm<TValues extends FieldValues>({
 
 	const methods = useRHForm<TValues>({
 		...rhfOptions,
-		// Zod v4 + @hookform/resolvers v5 type incompatibility — cast resolver to correct output type
-		resolver: zodResolver(schema as unknown as Parameters<typeof zodResolver>[0]) as Resolver<TValues>,
+		// NOTE: Zod v4 changed its internal schema types in a way that breaks
+		// @hookform/resolvers v5's inferred parameter type. The double-cast
+		// (`as unknown as`) is intentional — it bridges the type mismatch at the
+		// resolver boundary without affecting runtime behaviour.
+		resolver: zodResolver(
+			schema as unknown as Parameters<typeof zodResolver>[0],
+		) as Resolver<TValues>,
 		mode: rhfOptions.mode ?? "onTouched",
 	});
 
@@ -84,9 +87,7 @@ export function useForm<TValues extends FieldValues>({
 				await onSubmit(values);
 			} catch (err: unknown) {
 				const message =
-					err instanceof Error
-						? err.message
-						: "An unexpected error occurred. Please try again.";
+					err instanceof Error ? err.message : "An unexpected error occurred. Please try again.";
 				setServerError(message);
 			} finally {
 				setIsSubmitting(false);
@@ -106,19 +107,15 @@ export function useForm<TValues extends FieldValues>({
 	 */
 	const getFieldProps = useCallback(
 		(name: Path<TValues>) => {
-			const { ref: _ref, onChange, ...rest } = register(name);
-			const errorMessage = formState.errors[name]?.message as
-				| string
-				| undefined;
+			const { ref: _ref, onChange: _onChange, ...rest } = register(name);
+			const errorMessage = formState.errors[name]?.message as string | undefined;
 
 			return {
 				...rest,
 				value: (watch(name) as string) ?? "",
 				onChangeText: (text: string) =>
 					setValue(name, text as TValues[Path<TValues>], {
-						shouldValidate: !!(
-							formState.touchedFields as Record<string, unknown>
-						)[name],
+						shouldValidate: !!(formState.touchedFields as Record<string, unknown>)[name],
 						shouldDirty: true,
 					}),
 				error: errorMessage,

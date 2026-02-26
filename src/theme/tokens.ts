@@ -49,6 +49,8 @@ export interface ThemeColors {
 		secondary: string;
 		/** Streak counters, rewards, highlights */
 		highlight: string;
+		/** Subtle brand-tinted background — chips, tags, badges */
+		surface: string;
 	};
 
 	border: {
@@ -67,6 +69,17 @@ export interface ThemeColors {
 		successBackground: string;
 		warning: string;
 		warningBackground: string;
+		/** Informational / neutral status */
+		info: string;
+		infoBackground: string;
+	};
+
+	/** Interactive element state colors */
+	interactive: {
+		/** Disabled foreground (text/icon) */
+		disabled: string;
+		/** Disabled background */
+		disabledBackground: string;
 	};
 
 	nav: {

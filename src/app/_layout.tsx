@@ -1,6 +1,6 @@
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { useThemeContext } from "@/hooks/useThemeContext";
+import { useThemeContext } from "@/hooks";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import {
 	DarkTheme,

@@ -1,35 +1,52 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useMemo } from "react";
+import { Pressable, SafeAreaView, StyleSheet, Text } from "react-native";
 
 // Placeholder home screen — shown after successful login
 // TODO: Replace with full app once other features are implemented
 
+import { useAuth, useThemeColors } from "@/hooks";
+import type { ThemeColors } from "@/theme";
+
 export default function HomeScreen() {
+	const colors = useThemeColors();
+	const { logout } = useAuth();
+	const styles = useMemo(() => createStyles(colors), [colors]);
+
+	const handleLogout = useCallback(async () => {
+		await logout();
+	}, [logout]);
+
 	return (
-		<View style={styles.container}>
+		<SafeAreaView style={styles.container}>
 			<Text style={styles.title}>MoodNote</Text>
-			<Text style={styles.subtitle}></Text>
-			<Pressable style={styles.btn}>
+			<Pressable
+				style={styles.btn}
+				onPress={handleLogout}
+				accessibilityLabel="Đăng xuất"
+				accessibilityRole="button">
 				<Text style={styles.btnText}>Đăng xuất</Text>
 			</Pressable>
-		</View>
+		</SafeAreaView>
 	);
 }
 
-const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		justifyContent: "center",
-		alignItems: "center",
-		gap: 16,
-	},
-	title: { fontSize: 28, fontWeight: "bold", color: "#6C63FF" },
-	subtitle: { fontSize: 16, color: "#6b7280" },
-	btn: {
-		marginTop: 24,
-		backgroundColor: "#ef4444",
-		borderRadius: 8,
-		paddingVertical: 10,
-		paddingHorizontal: 24,
-	},
-	btnText: { color: "#fff", fontWeight: "600" },
-});
+function createStyles(colors: ThemeColors) {
+	return StyleSheet.create({
+		container: {
+			flex: 1,
+			justifyContent: "center",
+			alignItems: "center",
+			gap: 16,
+			backgroundColor: colors.background.primary,
+		},
+		title: { fontSize: 28, fontWeight: "bold", color: colors.brand.primary },
+		btn: {
+			marginTop: 24,
+			backgroundColor: colors.status.error,
+			borderRadius: 8,
+			paddingVertical: 10,
+			paddingHorizontal: 24,
+		},
+		btnText: { color: colors.text.inverse, fontWeight: "600" },
+	});
+}

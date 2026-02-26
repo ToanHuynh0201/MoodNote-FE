@@ -1,14 +1,10 @@
-import { isAxiosError } from "axios";
 import { ERROR_CODES, ERROR_MESSAGES } from "@/constants";
+import { isAxiosError } from "axios";
 
 export class ApiError extends Error {
 	status: number;
 	code: string;
-	constructor(
-		message: string,
-		status = 500,
-		code = ERROR_CODES.INTERNAL_ERROR,
-	) {
+	constructor(message: string, status = 500, code = ERROR_CODES.INTERNAL_ERROR) {
 		super(message);
 		this.name = "ApiError";
 		this.status = status;
@@ -23,11 +19,7 @@ export class ApiError extends Error {
 export const parseError = (error: unknown): ApiError => {
 	// Network error (no response or not an Axios error)
 	if (!isAxiosError(error) || !error.response) {
-		return new ApiError(
-			ERROR_MESSAGES.NETWORK_ERROR,
-			0,
-			ERROR_CODES.NETWORK_ERROR,
-		);
+		return new ApiError(ERROR_MESSAGES.NETWORK_ERROR, 0, ERROR_CODES.NETWORK_ERROR);
 	}
 
 	const { status, data } = error.response;
@@ -42,13 +34,9 @@ export const parseError = (error: unknown): ApiError => {
 	}
 
 	// Extract error details from various response formats
-	const errorCode =
-		data?.error?.code || data?.code || ERROR_CODES.INTERNAL_ERROR;
+	const errorCode = data?.error?.code || data?.code || ERROR_CODES.INTERNAL_ERROR;
 	const errorMessage =
-		data?.error?.message ||
-		data?.message ||
-		data?.error ||
-		ERROR_MESSAGES.GENERIC_ERROR;
+		data?.error?.message || data?.message || data?.error || ERROR_MESSAGES.GENERIC_ERROR;
 
 	// Validate error code
 	const validCode = Object.values(ERROR_CODES).includes(errorCode)
@@ -59,8 +47,7 @@ export const parseError = (error: unknown): ApiError => {
 	const finalMessage =
 		errorMessage && errorMessage !== ERROR_MESSAGES.GENERIC_ERROR
 			? errorMessage
-			: ERROR_MESSAGES[validCode as keyof typeof ERROR_MESSAGES] ||
-				errorMessage;
+			: ERROR_MESSAGES[validCode as keyof typeof ERROR_MESSAGES] || errorMessage;
 
 	return new ApiError(finalMessage, status, validCode);
 };
@@ -98,11 +85,11 @@ export const withErrorHandling = <TArgs extends unknown[], TReturn>(
 				};
 			}
 
-			const error = parseError({ response });
+			// Response received but indicates failure — extract error details directly
 			return {
 				success: false,
-				error: error.message,
-				code: error.code,
+				error: r.data?.message ?? ERROR_MESSAGES.GENERIC_ERROR,
+				code: r.data?.code !== undefined ? String(r.data.code) : ERROR_CODES.INTERNAL_ERROR,
 			};
 		} catch (error: unknown) {
 			const parsedError = parseError(error);
