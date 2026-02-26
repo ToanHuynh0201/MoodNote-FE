@@ -1,5 +1,5 @@
-export { Badge } from "./Badge";
-export { Button } from "./Button";
-export { Card } from "./Card";
-export { Input } from "./Input";
-export { LoadingSpinner } from "./LoadingSpinner";
+export * from "./buttons";
+export * from "./display";
+export * from "./feedback";
+export * from "./inputs";
+export * from "./overlay";
