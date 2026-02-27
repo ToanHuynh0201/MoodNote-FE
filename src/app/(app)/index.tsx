@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
-import { Pressable, SafeAreaView, StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // Placeholder home screen — shown after successful login
 // TODO: Replace with full app once other features are implemented

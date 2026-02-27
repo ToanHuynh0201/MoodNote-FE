@@ -10,7 +10,7 @@ export default function AppLayout() {
 	// Wait for session restore before deciding
 	if (isLoading) return null;
 
-	if (!isAuthenticated) {
+	if (!isAuthenticated && !__DEV__) {
 		return <Redirect href={ROUTES.LOGIN} />;
 	}
 
