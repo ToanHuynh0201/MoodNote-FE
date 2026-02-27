@@ -1,19 +1,32 @@
-import { Redirect } from "expo-router";
-
 import { ROUTES } from "@/constants";
 import { useAuth } from "@/hooks";
+import { Redirect } from "expo-router";
+import { useState } from "react";
 
 // Entry point:
-// - DEV mode  → always go to /component-review for UI development
-// - PROD mode → redirect based on auth state
+// - MOCK_MODE → check onboarding, then redirect based on auth state (bỏ qua API)
+// - PROD mode → check onboarding, then redirect based on auth state
 export default function Index() {
 	const { isAuthenticated, isLoading } = useAuth();
+	const [onboardingChecked, setOnboardingChecked] = useState(false);
+	const [onboardingDone, setOnboardingDone] = useState(false);
 
-	if (__DEV__) {
-		return <Redirect href="/component-review" />;
+	// useEffect(() => {
+	// 	getStorageItem<string>(ONBOARDING_COMPLETED_KEY).then((value) => {
+	// 		setOnboardingDone(value === "true");
+	// 		setOnboardingChecked(true);
+	// 	});
+	// }, []);
+
+	// if (__DEV__) {
+	// 	return <Redirect href="/component-review" />;
+	// }
+
+	if (isLoading || !onboardingChecked) return null;
+
+	if (!onboardingDone) {
+		return <Redirect href={ROUTES.ONBOARDING} />;
 	}
-
-	if (isLoading) return null;
 
 	return <Redirect href={isAuthenticated ? ROUTES.HOME : ROUTES.LOGIN} />;
 }

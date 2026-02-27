@@ -1,4 +1,4 @@
-import { AUTH_CONFIG } from "@/constants";
+import { AUTH_CONFIG, MOCK_MODE } from "@/constants";
 import type { RegisterFormValues } from "@/schemas";
 import { authService } from "@/services/auth.service";
 import type { ForgotPasswordPayload, LoginPayload, User } from "@/types/user.types";
@@ -31,6 +31,16 @@ interface AuthContextValue extends AuthState {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
+// ─── Mock data ────────────────────────────────────────────────────────────────
+
+const MOCK_USER: User = {
+	id: "mock-user-001",
+	email: "demo@moodnote.app",
+	createdAt: new Date().toISOString(),
+	lastLogin: new Date().toISOString(),
+	isVerified: true,
+};
+
 // ─── Provider ────────────────────────────────────────────────────────────────
 
 interface AuthProviderProps {
@@ -61,7 +71,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		})();
 	}, []);
 
+	// ─── Actions ─────────────────────────────────────────────────────────────────
+
 	const login = useCallback(async (payload: LoginPayload) => {
+		if (MOCK_MODE) {
+			const mockUser = { ...MOCK_USER, email: payload.email };
+			await Promise.all([
+				setAuthToken("mock-access-token"),
+				setStorageItem(AUTH_CONFIG.REFRESH_TOKEN_STORAGE_KEY, "mock-refresh-token"),
+				setUserData(mockUser),
+			]);
+			setState({ user: mockUser, isAuthenticated: true, isLoading: false });
+			return;
+		}
 		const response = await authService.login(payload);
 		const { user, tokens } = response.data.data;
 
@@ -75,12 +97,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	}, []);
 
 	const register = useCallback(async (formValues: RegisterFormValues) => {
+		if (MOCK_MODE) return; // Mock: đăng ký thành công ngay
 		// Strip confirmPassword — only email + password are sent to the API
 		const { confirmPassword: _omit, ...payload } = formValues;
 		await authService.register(payload);
 	}, []);
 
 	const logout = useCallback(async () => {
+		if (MOCK_MODE) {
+			await clearStorage();
+			setState({ user: null, isAuthenticated: false, isLoading: false });
+			return;
+		}
 		try {
 			await authService.logout();
 		} catch {
@@ -92,6 +120,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	}, []);
 
 	const forgotPassword = useCallback(async (payload: ForgotPasswordPayload) => {
+		if (MOCK_MODE) return; // Mock: gửi email thành công ngay
 		await authService.forgotPassword(payload);
 	}, []);
 

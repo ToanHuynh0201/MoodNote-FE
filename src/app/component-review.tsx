@@ -17,10 +17,13 @@ import {
 	ConfirmationDialog,
 	Divider,
 	EmptyState,
+	EmotionIllustration,
 	IconButton,
 	Input,
+	JournalIllustration,
 	LoadingSpinner,
 	Modal,
+	MusicIllustration,
 	ProgressBar,
 	SearchBar,
 	SectionHeader,
@@ -458,6 +461,27 @@ function ReviewContent() {
 						<Card variant="bordered">
 							<EmptyState title="Không tìm thấy kết quả" subtitle="Thử tìm kiếm với từ khoá khác." />
 						</Card>
+					</Block>
+				</Section>
+
+				<Divider spacing={4} />
+
+				{/* ── ILLUSTRATIONS ─────────────────────────────────── */}
+				<Section title="Illustrations">
+					<Block label="JournalIllustration">
+						<Row>
+							<JournalIllustration />
+						</Row>
+					</Block>
+					<Block label="EmotionIllustration">
+						<Row>
+							<EmotionIllustration />
+						</Row>
+					</Block>
+					<Block label="MusicIllustration">
+						<Row>
+							<MusicIllustration />
+						</Row>
 					</Block>
 				</Section>
 

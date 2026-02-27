@@ -51,6 +51,8 @@ export const ERROR_MESSAGES = {
 };
 
 export const ROUTES = {
+	ONBOARDING: "/(auth)/onboarding" as const,
+	WELCOME: "/(auth)/welcome" as const,
 	LOGIN: "/(auth)/login" as const,
 	REGISTER: "/(auth)/register" as const,
 	FORGOT_PASSWORD: "/(auth)/forgot-password" as const,
@@ -58,3 +60,11 @@ export const ROUTES = {
 };
 
 export const THEME_STORAGE_KEY = "moodnote_theme";
+export const ONBOARDING_COMPLETED_KEY = "moodnote_onboarding_completed";
+
+/**
+ * MOCK_MODE — bật khi chưa có backend API.
+ * Tất cả auth actions sẽ thành công ngay với dữ liệu giả.
+ * Đặt thành `false` khi API đã sẵn sàng.
+ */
+export const MOCK_MODE = true;

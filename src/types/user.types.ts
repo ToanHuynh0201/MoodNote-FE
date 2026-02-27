@@ -24,6 +24,7 @@ export interface LoginPayload {
  * `confirmPassword` for UI validation, then omits it before calling the API.
  */
 export interface RegisterPayload {
+	username: string;
 	email: string;
 	password: string;
 }
