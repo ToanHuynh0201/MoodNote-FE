@@ -11,6 +11,7 @@ import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeIn, FadeInDown, FadeInUp } from "react-native-reanimated";
 
 export default function LoginScreen() {
 	const colors = useThemeColors();
@@ -48,12 +49,12 @@ export default function LoginScreen() {
 				showsVerticalScrollIndicator={false}
 			>
 				{/* Heading */}
-				<View style={styles.heading}>
+				<Animated.View entering={FadeInDown.duration(400)} style={styles.heading}>
 					<Text style={styles.title}>Đăng nhập</Text>
-				</View>
+				</Animated.View>
 
 				{/* Form */}
-				<View style={styles.form}>
+				<Animated.View entering={FadeInDown.duration(400).delay(100)} style={styles.form}>
 					<Input
 						label="Tên đăng nhập"
 						placeholder="email@example.com"
@@ -109,21 +110,23 @@ export default function LoginScreen() {
 					>
 						<Text style={styles.forgotText}>Quên mật khẩu?</Text>
 					</Pressable>
-				</View>
+				</Animated.View>
 
 				{/* Submit */}
-				<Button
-					title="Đăng nhập"
-					variant="primary"
-					size="lg"
-					fullWidth
-					loading={isSubmitting}
-					onPress={submitForm}
-					accessibilityLabel="Đăng nhập vào tài khoản"
-				/>
+				<Animated.View entering={FadeInUp.duration(400).delay(200)}>
+					<Button
+						title="Đăng nhập"
+						variant="primary"
+						size="lg"
+						fullWidth
+						loading={isSubmitting}
+						onPress={submitForm}
+						accessibilityLabel="Đăng nhập vào tài khoản"
+					/>
+				</Animated.View>
 
 				{/* Go to register */}
-				<View style={styles.registerRow}>
+				<Animated.View entering={FadeIn.duration(400).delay(300)} style={styles.registerRow}>
 					<Text style={styles.registerPrompt}>Chưa có tài khoản? </Text>
 					<Pressable
 						onPress={handleGoToRegister}
@@ -133,7 +136,7 @@ export default function LoginScreen() {
 					>
 						<Text style={styles.registerLink}>Đăng kí</Text>
 					</Pressable>
-				</View>
+				</Animated.View>
 			</ScrollView>
 		</ScreenWrapper>
 	);

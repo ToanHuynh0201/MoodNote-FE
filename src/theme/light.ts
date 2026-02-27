@@ -8,7 +8,7 @@ import type { ThemeColors } from "./tokens";
  */
 export const LIGHT_THEME: ThemeColors = {
 	background: {
-		primary: PALETTE.neutral[50],
+		primary: PALETTE.purple[100],
 		secondary: PALETTE.neutral.white,
 		card: PALETTE.neutral.white,
 		elevated: PALETTE.neutral.white,

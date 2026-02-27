@@ -6,6 +6,7 @@ import type { ThemeColors } from "@/theme";
 import { router } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
 
 export default function WelcomeScreen() {
 	const colors = useThemeColors();
@@ -24,22 +25,26 @@ export default function WelcomeScreen() {
 			<View style={styles.container}>
 				{/* Logo */}
 				<View style={styles.logoSection}>
-					<Image
-						source={require("../../../assets/images/splash-icon.png")}
-						style={styles.logo}
-						resizeMode="contain"
-					/>
-					<Text style={styles.logoText}>MoodNote</Text>
+					<Animated.View entering={ZoomIn.duration(500)}>
+						<Image
+							source={require("../../../assets/images/splash-icon.png")}
+							style={styles.logo}
+							resizeMode="contain"
+						/>
+					</Animated.View>
+					<Animated.View entering={FadeInDown.duration(400).delay(150)}>
+						<Text style={styles.logoText}>MoodNote</Text>
+					</Animated.View>
 				</View>
 
 				{/* Tagline */}
-				<View style={styles.taglineSection}>
+				<Animated.View entering={FadeInDown.duration(400).delay(300)} style={styles.taglineSection}>
 					<Text style={styles.tagline}>Trò chuyện</Text>
 					<Text style={styles.tagline}>với chính mình</Text>
-				</View>
+				</Animated.View>
 
 				{/* Actions */}
-				<View style={styles.actions}>
+				<Animated.View entering={FadeInUp.duration(400).delay(450)} style={styles.actions}>
 					<Button
 						title="Đăng kí"
 						variant="primary"
@@ -56,7 +61,7 @@ export default function WelcomeScreen() {
 					>
 						<Text style={styles.loginLink}>Đăng nhập</Text>
 					</Pressable>
-				</View>
+				</Animated.View>
 			</View>
 		</ScreenWrapper>
 	);
