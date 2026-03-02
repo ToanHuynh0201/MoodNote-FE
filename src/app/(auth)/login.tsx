@@ -1,15 +1,17 @@
 // FR-02: User login
-import { Button, Input } from "@/components/ui";
 import { ScreenWrapper } from "@/components/layout";
+import { Button, Input } from "@/components/ui";
 import { ROUTES } from "@/constants";
-import { useAuth } from "@/hooks";
+import { useAuth, useThemeColors } from "@/hooks";
 import { useForm } from "@/hooks/useForm";
 import { loginSchema } from "@/schemas";
-import { useThemeColors } from "@/hooks";
 import type { ThemeColors } from "@/theme";
+import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
+import { ms, s } from "@/utils";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import type { TextInput as RNTextInput } from "react-native";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeInDown, FadeInUp } from "react-native-reanimated";
 
@@ -18,6 +20,9 @@ export default function LoginScreen() {
 	const styles = useMemo(() => createStyles(colors), [colors]);
 	const { login } = useAuth();
 	const [passwordVisible, setPasswordVisible] = useState(false);
+
+	const emailRef = useRef<RNTextInput>(null);
+	const passwordRef = useRef<RNTextInput>(null);
 
 	const { getFieldProps, submitForm, isSubmitting, serverError } = useForm({
 		schema: loginSchema,
@@ -40,6 +45,10 @@ export default function LoginScreen() {
 		router.push(ROUTES.REGISTER);
 	}, []);
 
+	const focusPassword = useCallback(() => {
+		passwordRef.current?.focus();
+	}, []);
+
 	return (
 		<ScreenWrapper keyboard>
 			<ScrollView
@@ -47,32 +56,49 @@ export default function LoginScreen() {
 				contentContainerStyle={styles.scrollContent}
 				keyboardShouldPersistTaps="handled"
 				showsVerticalScrollIndicator={false}>
+				{/* Header row with back button */}
+				<Animated.View entering={FadeInDown.duration(300)} style={styles.headerRow}>
+					<Pressable
+						onPress={router.back}
+						hitSlop={12}
+						style={styles.backButton}
+						accessibilityLabel="Quay lại"
+						accessibilityRole="button">
+						<Feather name="arrow-left" size={s(22)} color={colors.text.primary} />
+					</Pressable>
+				</Animated.View>
+
 				{/* Heading */}
-				<Animated.View entering={FadeInDown.duration(400)}
-style={styles.heading}>
+				<Animated.View entering={FadeInDown.duration(400).delay(80)} style={styles.heading}>
 					<Text style={styles.title}>Đăng nhập</Text>
+					<Text style={styles.subtitle}>Chào mừng trở lại, hãy tiếp tục hành trình của bạn.</Text>
 				</Animated.View>
 
 				{/* Form */}
-				<Animated.View entering={FadeInDown.duration(400).delay(100)}
-style={styles.form}>
+				<Animated.View entering={FadeInDown.duration(400).delay(160)} style={styles.form}>
 					<Input
-						label="Tên đăng nhập"
+						ref={emailRef}
+						label="Email"
 						placeholder="email@example.com"
 						keyboardType="email-address"
 						autoCapitalize="none"
 						autoCorrect={false}
-						leftIcon={<Feather name="user" size={18} color={colors.iconDefault} />}
+						returnKeyType="next"
+						onSubmitEditing={focusPassword}
+						leftIcon={<Feather name="mail" size={s(18)} color={colors.iconDefault} />}
 						{...getFieldProps("email")}
 					/>
 
 					<Input
+						ref={passwordRef}
 						label="Mật khẩu"
 						placeholder="••••••••"
 						secureTextEntry={!passwordVisible}
 						autoCapitalize="none"
 						autoCorrect={false}
-						leftIcon={<Feather name="lock" size={18} color={colors.iconDefault} />}
+						returnKeyType="done"
+						onSubmitEditing={submitForm}
+						leftIcon={<Feather name="lock" size={s(18)} color={colors.iconDefault} />}
 						rightIcon={
 							<Pressable
 								onPress={togglePasswordVisible}
@@ -81,20 +107,13 @@ style={styles.form}>
 								accessibilityRole="button">
 								<Feather
 									name={passwordVisible ? "eye-off" : "eye"}
-									size={18}
+									size={s(18)}
 									color={colors.iconDefault}
 								/>
 							</Pressable>
 						}
 						{...getFieldProps("password")}
 					/>
-
-					{/* Server error */}
-					{serverError ? (
-						<View style={styles.errorBanner}>
-							<Text style={styles.errorText}>{serverError}</Text>
-						</View>
-					) : null}
 
 					{/* Forgot password */}
 					<Pressable
@@ -105,10 +124,23 @@ style={styles.form}>
 						accessibilityRole="link">
 						<Text style={styles.forgotText}>Quên mật khẩu?</Text>
 					</Pressable>
+
+					{/* Server error */}
+					{serverError ? (
+						<View style={styles.errorBanner}>
+							<Feather
+								name="alert-circle"
+								size={s(14)}
+								color={colors.status.error}
+								style={styles.errorIcon}
+							/>
+							<Text style={styles.errorText}>{serverError}</Text>
+						</View>
+					) : null}
 				</Animated.View>
 
 				{/* Submit */}
-				<Animated.View entering={FadeInUp.duration(400).delay(200)}>
+				<Animated.View entering={FadeInUp.duration(400).delay(240)}>
 					<Button
 						title="Đăng nhập"
 						variant="primary"
@@ -121,8 +153,7 @@ style={styles.form}>
 				</Animated.View>
 
 				{/* Go to register */}
-				<Animated.View entering={FadeIn.duration(400).delay(300)}
-style={styles.registerRow}>
+				<Animated.View entering={FadeIn.duration(400).delay(320)} style={styles.registerRow}>
 					<Text style={styles.registerPrompt}>Chưa có tài khoản? </Text>
 					<Pressable
 						onPress={handleGoToRegister}
@@ -144,37 +175,60 @@ function createStyles(colors: ThemeColors) {
 		},
 		scrollContent: {
 			flexGrow: 1,
-			paddingTop: 32,
-			paddingBottom: 32,
-			gap: 24,
+			paddingTop: SPACING[32],
+			paddingBottom: SPACING[32],
+			gap: SPACING[24],
+		},
+		headerRow: {
+			flexDirection: "row",
+			alignItems: "center",
+		},
+		backButton: {
+			padding: SPACING[4],
 		},
 		heading: {
-			alignItems: "center",
+			gap: SPACING[6],
 		},
 		title: {
 			color: colors.text.primary,
-			fontSize: 28,
+			fontSize: ms(28),
 			fontWeight: "700",
+			lineHeight: LINE_HEIGHT.loose,
+		},
+		subtitle: {
+			color: colors.text.secondary,
+			fontSize: FONT_SIZE[14],
+			lineHeight: LINE_HEIGHT.relaxed,
 		},
 		form: {
-			gap: 16,
+			gap: SPACING[4],
 		},
 		errorBanner: {
+			flexDirection: "row",
+			alignItems: "center",
+			gap: SPACING[8],
 			backgroundColor: colors.status.errorBackground,
-			borderRadius: 10,
-			padding: 12,
+			borderRadius: RADIUS.md,
+			paddingHorizontal: SPACING[12],
+			paddingVertical: SPACING[10],
+		},
+		errorIcon: {
+			flexShrink: 0,
 		},
 		errorText: {
+			flex: 1,
 			color: colors.status.error,
-			fontSize: 13,
-			textAlign: "center",
+			fontSize: FONT_SIZE[13],
+			lineHeight: LINE_HEIGHT.normal,
 		},
 		forgotWrapper: {
 			alignSelf: "flex-end",
+			marginTop: -SPACING[8],
 		},
 		forgotText: {
 			color: colors.text.link,
-			fontSize: 13,
+			fontSize: FONT_SIZE[13],
+			lineHeight: LINE_HEIGHT.normal,
 			fontWeight: "500",
 		},
 		registerRow: {
@@ -184,11 +238,13 @@ function createStyles(colors: ThemeColors) {
 		},
 		registerPrompt: {
 			color: colors.text.secondary,
-			fontSize: 14,
+			fontSize: FONT_SIZE[14],
+			lineHeight: LINE_HEIGHT.normal,
 		},
 		registerLink: {
 			color: colors.text.link,
-			fontSize: 14,
+			fontSize: FONT_SIZE[14],
+			lineHeight: LINE_HEIGHT.normal,
 			fontWeight: "600",
 		},
 	});

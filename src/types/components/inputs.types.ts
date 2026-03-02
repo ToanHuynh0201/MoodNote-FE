@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
-import type { TextInputProps } from "react-native";
+import type { ReactNode, Ref } from "react";
+import type { TextInput as RNTextInput, TextInputProps } from "react-native";
 
 export interface InputProps extends TextInputProps {
+	ref?: Ref<RNTextInput>;
 	label?: string;
 	error?: string;
 	hint?: string;

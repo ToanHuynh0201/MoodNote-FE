@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useRef, useState } from "react";
-import type { TextInput as RNTextInput, TextInputProps } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import type { TextInputProps } from "react-native";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 
 import { useThemeColors } from "@/hooks";
@@ -16,12 +16,12 @@ export function Input({
 	style,
 	onFocus,
 	onBlur,
+	ref,
 	...rest
 }: InputProps) {
 	const colors = useThemeColors();
 	const [focused, setFocused] = useState(false);
 	const styles = useMemo(() => createStyles(colors), [colors]);
-	const inputRef = useRef<RNTextInput>(null);
 
 	const handleFocus = useCallback(
 		(e: Parameters<NonNullable<TextInputProps["onFocus"]>>[0]) => {
@@ -53,7 +53,7 @@ export function Input({
 			<View style={[styles.inputRow, borderStyle, error != null && styles.inputBorderError]}>
 				{leftIcon != null && <View style={styles.iconLeft}>{leftIcon}</View>}
 				<TextInput
-					ref={inputRef}
+					ref={ref}
 					style={[styles.input, hasIcons && styles.inputWithIcon, style]}
 					placeholderTextColor={colors.input.placeholder}
 					onFocus={handleFocus}
