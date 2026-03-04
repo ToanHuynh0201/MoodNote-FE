@@ -14,7 +14,8 @@ export interface AuthTokens {
 }
 
 export interface LoginPayload {
-	email: string;
+	/** email address or username */
+	identifier: string;
 	password: string;
 }
 
@@ -31,6 +32,25 @@ export interface RegisterPayload {
 
 export interface ForgotPasswordPayload {
 	email: string;
+}
+
+export interface VerifyEmailPayload {
+	email: string;
+	otp: string;
+}
+
+export interface ResendVerificationPayload {
+	email: string;
+}
+
+export interface VerifyResetOtpPayload {
+	email: string;
+	otp: string;
+}
+
+export interface ResetPasswordPayload {
+	resetToken: string;
+	password: string;
 }
 
 export interface ChangePasswordPayload {

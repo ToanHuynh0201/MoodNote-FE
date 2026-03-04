@@ -15,7 +15,7 @@ const passwordSchema = z
 // ─── Login (FR-02) ───────────────────────────────────────────────────────────
 
 export const loginSchema = z.object({
-	email: emailSchema,
+	identifier: z.string().min(1, "Email hoặc tên đăng nhập là bắt buộc"),
 	password: z.string().min(1, "Password is required"),
 });
 
@@ -48,7 +48,32 @@ export const forgotPasswordSchema = z.object({
 
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
-// ─── Reset Password ───────────────────────────────────────────────────────────
+// ─── Verify OTP (email verification + forgot-password step 2) ────────────────
+
+export const verifyOtpSchema = z.object({
+	otp: z
+		.string()
+		.length(6, "OTP phải có đúng 6 chữ số")
+		.regex(/^\d+$/, "OTP chỉ được chứa chữ số"),
+});
+
+export type VerifyOtpFormValues = z.infer<typeof verifyOtpSchema>;
+
+// ─── New Password (forgot-password step 3) ───────────────────────────────────
+
+export const newPasswordSchema = z
+	.object({
+		password: passwordSchema,
+		confirmPassword: z.string().min(1, "Please confirm your password"),
+	})
+	.refine((data) => data.password === data.confirmPassword, {
+		message: "Passwords do not match",
+		path: ["confirmPassword"],
+	});
+
+export type NewPasswordFormValues = z.infer<typeof newPasswordSchema>;
+
+// ─── Reset Password (legacy — otp + password in one step) ────────────────────
 
 export const resetPasswordSchema = z
 	.object({

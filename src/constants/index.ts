@@ -57,6 +57,7 @@ export const ROUTES = {
 	LOGIN: "/(auth)/login" as const,
 	REGISTER: "/(auth)/register" as const,
 	FORGOT_PASSWORD: "/(auth)/forgot-password" as const,
+	VERIFY_EMAIL: "/(auth)/verify-email" as const,
 	HOME: "/(app)" as const,
 };
 

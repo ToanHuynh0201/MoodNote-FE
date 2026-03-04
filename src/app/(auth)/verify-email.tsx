@@ -1,53 +1,58 @@
-// FR-02: User login
+// FR-01: Email verification after registration
 import { ScreenWrapper } from "@/components/layout";
 import { Button, Input } from "@/components/ui";
 import { ROUTES } from "@/constants";
 import { useAuth, useThemeColors } from "@/hooks";
 import { useForm } from "@/hooks/useForm";
-import { loginSchema } from "@/schemas";
+import { verifyOtpSchema } from "@/schemas";
 import type { ThemeColors } from "@/theme";
-import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
+import { FONT_SIZE, LINE_HEIGHT, RADIUS, SIZE, SPACING } from "@/theme";
 import { ms, s } from "@/utils";
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
-import type { TextInput as RNTextInput } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeInDown, FadeInUp } from "react-native-reanimated";
 
-export default function LoginScreen() {
+const RESEND_COOLDOWN = 60;
+
+export default function VerifyEmailScreen() {
 	const colors = useThemeColors();
 	const styles = useMemo(() => createStyles(colors), [colors]);
-	const { login } = useAuth();
-	const [passwordVisible, setPasswordVisible] = useState(false);
+	const { verifyEmail, resendVerification } = useAuth();
+	const { email } = useLocalSearchParams<{ email: string }>();
 
-	const identifierRef = useRef<RNTextInput>(null);
-	const passwordRef = useRef<RNTextInput>(null);
+	const [timer, setTimer] = useState(RESEND_COOLDOWN);
+	const [isResending, setIsResending] = useState(false);
+
+	// Countdown timer — starts immediately on mount
+	useEffect(() => {
+		if (timer <= 0) return;
+		const id = setInterval(() => {
+			setTimer((t) => t - 1);
+		}, 1000);
+		return () => clearInterval(id);
+	}, [timer]);
 
 	const { getFieldProps, submitForm, isSubmitting, serverError } = useForm({
-		schema: loginSchema,
-		defaultValues: { identifier: "", password: "" },
+		schema: verifyOtpSchema,
+		defaultValues: { otp: "" },
 		onSubmit: async (values) => {
-			await login(values);
-			router.replace(ROUTES.HOME);
+			await verifyEmail({ email: email ?? "", otp: values.otp });
+			router.replace(ROUTES.LOGIN);
 		},
 	});
 
-	const togglePasswordVisible = useCallback(() => {
-		setPasswordVisible((v) => !v);
-	}, []);
-
-	const handleForgotPassword = useCallback(() => {
-		router.push(ROUTES.FORGOT_PASSWORD);
-	}, []);
-
-	const handleGoToRegister = useCallback(() => {
-		router.push(ROUTES.REGISTER);
-	}, []);
-
-	const focusPassword = useCallback(() => {
-		passwordRef.current?.focus();
-	}, []);
+	const handleResend = useCallback(async () => {
+		if (timer > 0 || isResending) return;
+		setIsResending(true);
+		try {
+			await resendVerification({ email: email ?? "" });
+			setTimer(RESEND_COOLDOWN);
+		} finally {
+			setIsResending(false);
+		}
+	}, [timer, isResending, resendVerification, email]);
 
 	return (
 		<ScreenWrapper keyboard>
@@ -68,61 +73,31 @@ export default function LoginScreen() {
 					</Pressable>
 				</Animated.View>
 
-				{/* Heading */}
+				{/* Icon + Heading */}
 				<Animated.View entering={FadeInDown.duration(400).delay(80)} style={styles.heading}>
-					<Text style={styles.title}>Đăng nhập</Text>
-					<Text style={styles.subtitle}>Chào mừng trở lại, hãy tiếp tục hành trình của bạn.</Text>
+					<View style={styles.iconWrapper}>
+						<Feather name="mail" size={s(32)} color={colors.brand.primary} />
+					</View>
+					<Text style={styles.title}>Xác thực email</Text>
+					<Text style={styles.subtitle}>
+						Chúng tôi đã gửi mã 6 số đến{"\n"}
+						<Text style={styles.emailText}>{email}</Text>
+					</Text>
 				</Animated.View>
 
 				{/* Form */}
 				<Animated.View entering={FadeInDown.duration(400).delay(160)} style={styles.form}>
 					<Input
-						ref={identifierRef}
-						label="Email hoặc tên đăng nhập"
-						placeholder="Email hoặc tên đăng nhập"
-						autoCapitalize="none"
-						autoCorrect={false}
-						returnKeyType="next"
-						onSubmitEditing={focusPassword}
-						leftIcon={<Feather name="user" size={s(18)} color={colors.iconDefault} />}
-						{...getFieldProps("identifier")}
-					/>
-
-					<Input
-						ref={passwordRef}
-						label="Mật khẩu"
-						placeholder="••••••••"
-						secureTextEntry={!passwordVisible}
-						autoCapitalize="none"
+						label="Mã xác thực"
+						placeholder="000000"
+						keyboardType="number-pad"
+						maxLength={6}
 						autoCorrect={false}
 						returnKeyType="done"
 						onSubmitEditing={submitForm}
-						leftIcon={<Feather name="lock" size={s(18)} color={colors.iconDefault} />}
-						rightIcon={
-							<Pressable
-								onPress={togglePasswordVisible}
-								hitSlop={8}
-								accessibilityLabel={passwordVisible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-								accessibilityRole="button">
-								<Feather
-									name={passwordVisible ? "eye-off" : "eye"}
-									size={s(18)}
-									color={colors.iconDefault}
-								/>
-							</Pressable>
-						}
-						{...getFieldProps("password")}
+						leftIcon={<Feather name="shield" size={s(18)} color={colors.iconDefault} />}
+						{...getFieldProps("otp")}
 					/>
-
-					{/* Forgot password */}
-					<Pressable
-						style={styles.forgotWrapper}
-						onPress={handleForgotPassword}
-						hitSlop={8}
-						accessibilityLabel="Quên mật khẩu"
-						accessibilityRole="link">
-						<Text style={styles.forgotText}>Quên mật khẩu?</Text>
-					</Pressable>
 
 					{/* Server error */}
 					{serverError ? (
@@ -141,25 +116,28 @@ export default function LoginScreen() {
 				{/* Submit */}
 				<Animated.View entering={FadeInUp.duration(400).delay(240)}>
 					<Button
-						title="Đăng nhập"
+						title="Xác thực"
 						variant="primary"
 						size="lg"
 						fullWidth
 						loading={isSubmitting}
 						onPress={submitForm}
-						accessibilityLabel="Đăng nhập vào tài khoản"
+						accessibilityLabel="Xác thực email"
 					/>
 				</Animated.View>
 
-				{/* Go to register */}
-				<Animated.View entering={FadeIn.duration(400).delay(320)} style={styles.registerRow}>
-					<Text style={styles.registerPrompt}>Chưa có tài khoản? </Text>
+				{/* Resend row */}
+				<Animated.View entering={FadeIn.duration(400).delay(320)} style={styles.resendRow}>
+					<Text style={styles.resendPrompt}>Chưa nhận được mã? </Text>
 					<Pressable
-						onPress={handleGoToRegister}
+						onPress={handleResend}
+						disabled={timer > 0 || isResending}
 						hitSlop={8}
-						accessibilityLabel="Tạo tài khoản mới"
-						accessibilityRole="link">
-						<Text style={styles.registerLink}>Đăng kí</Text>
+						accessibilityLabel={timer > 0 ? `Gửi lại sau ${timer} giây` : "Gửi lại mã xác thực"}
+						accessibilityRole="button">
+						<Text style={[styles.resendLink, (timer > 0 || isResending) && styles.resendDisabled]}>
+							{timer > 0 ? `Gửi lại (${timer}s)` : "Gửi lại"}
+						</Text>
 					</Pressable>
 				</Animated.View>
 			</ScrollView>
@@ -186,7 +164,15 @@ function createStyles(colors: ThemeColors) {
 			padding: SPACING[4],
 		},
 		heading: {
-			gap: SPACING[6],
+			gap: SPACING[12],
+		},
+		iconWrapper: {
+			width: SIZE.xl,
+			height: SIZE.xl,
+			borderRadius: RADIUS.lg,
+			backgroundColor: colors.brand.surface,
+			alignItems: "center",
+			justifyContent: "center",
 		},
 		title: {
 			color: colors.text.primary,
@@ -198,6 +184,10 @@ function createStyles(colors: ThemeColors) {
 			color: colors.text.secondary,
 			fontSize: FONT_SIZE[14],
 			lineHeight: LINE_HEIGHT.relaxed,
+		},
+		emailText: {
+			color: colors.text.primary,
+			fontWeight: "600",
 		},
 		form: {
 			gap: SPACING[4],
@@ -220,31 +210,24 @@ function createStyles(colors: ThemeColors) {
 			fontSize: FONT_SIZE[13],
 			lineHeight: LINE_HEIGHT.normal,
 		},
-		forgotWrapper: {
-			alignSelf: "flex-end",
-			marginTop: -SPACING[8],
-		},
-		forgotText: {
-			color: colors.text.link,
-			fontSize: FONT_SIZE[13],
-			lineHeight: LINE_HEIGHT.normal,
-			fontWeight: "500",
-		},
-		registerRow: {
+		resendRow: {
 			flexDirection: "row",
 			justifyContent: "center",
 			alignItems: "center",
 		},
-		registerPrompt: {
+		resendPrompt: {
 			color: colors.text.secondary,
 			fontSize: FONT_SIZE[14],
 			lineHeight: LINE_HEIGHT.normal,
 		},
-		registerLink: {
+		resendLink: {
 			color: colors.text.link,
 			fontSize: FONT_SIZE[14],
 			lineHeight: LINE_HEIGHT.normal,
 			fontWeight: "600",
+		},
+		resendDisabled: {
+			color: colors.interactive.disabled,
 		},
 	});
 }

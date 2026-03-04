@@ -32,7 +32,7 @@ export default function RegisterScreen() {
 		defaultValues: { username: "", email: "", password: "", confirmPassword: "" },
 		onSubmit: async (values) => {
 			await register(values);
-			router.replace(ROUTES.LOGIN);
+			router.push({ pathname: ROUTES.VERIFY_EMAIL, params: { email: values.email } });
 		},
 	});
 
