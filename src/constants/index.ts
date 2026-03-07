@@ -2,9 +2,16 @@
  * Application constants
  * Centralized location for all application constants
  */
+
+import { Platform } from "react-native";
+
 // API Configuration
 export const API_CONFIG = {
-	BASE_URL: "http://localhost:3000/api/v1",
+	BASE_URL: Platform.select({
+		android: "http://10.0.2.2:3000/api", // emulator host alias
+		ios: "http://localhost:3000/api",
+		default: "http://10.0.2.2:3000/api",
+	})!,
 	TIMEOUT: 10000, // 10 seconds
 	RETRY_ATTEMPTS: 3,
 	RETRY_DELAY: 1000,
@@ -58,15 +65,12 @@ export const ROUTES = {
 	REGISTER: "/(auth)/register" as const,
 	FORGOT_PASSWORD: "/(auth)/forgot-password" as const,
 	VERIFY_EMAIL: "/(auth)/verify-email" as const,
-	HOME: "/(app)" as const,
+	HOME: "/(app)/(tabs)" as const,
+	TAB_HOME: "/(app)/(tabs)/" as const,
+	TAB_JOURNAL: "/(app)/(tabs)/journal" as const,
+	TAB_STATISTICS: "/(app)/(tabs)/statistics" as const,
+	TAB_PROFILE: "/(app)/(tabs)/profile" as const,
 };
 
 export const THEME_STORAGE_KEY = "moodnote_theme";
 export const ONBOARDING_COMPLETED_KEY = "moodnote_onboarding_completed";
-
-/**
- * MOCK_MODE — bật khi chưa có backend API.
- * Tất cả auth actions sẽ thành công ngay với dữ liệu giả.
- * Đặt thành `false` khi API đã sẵn sàng.
- */
-export const MOCK_MODE = true;

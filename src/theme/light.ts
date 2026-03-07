@@ -56,6 +56,7 @@ export const LIGHT_THEME: ThemeColors = {
 
 	nav: {
 		background: PALETTE.neutral.white,
+		backgroundGlass: PALETTE.glass.light,
 		activeIcon: PALETTE.purple[400],
 		inactiveIcon: PALETTE.neutral[400],
 		activeTint: PALETTE.purple[400],

@@ -3,7 +3,6 @@
 import { apiService as api } from "@/lib/api";
 import type { ApiResponse } from "@/types/api.types";
 import type {
-	AuthTokens,
 	ChangePasswordPayload,
 	ForgotPasswordPayload,
 	LoginPayload,
@@ -18,7 +17,10 @@ import type {
 export const authService = {
 	// FR-02: Login with email or username + password
 	login: (payload: LoginPayload) =>
-		api.post<ApiResponse<{ user: User; tokens: AuthTokens }>>("/auth/login", payload),
+		api.post<ApiResponse<{ user: User; accessToken: string; refreshToken: string }>>(
+			"/auth/login",
+			payload,
+		),
 
 	// FR-01: Register new account
 	register: (payload: RegisterPayload) =>

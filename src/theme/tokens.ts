@@ -85,6 +85,8 @@ export interface ThemeColors {
 	nav: {
 		/** Tab bar / navigation bar background */
 		background: string;
+		/** Semi-transparent bg for liquid glass BlurView overlay */
+		backgroundGlass: string;
 		activeIcon: string;
 		inactiveIcon: string;
 		/** Active tab label tint */

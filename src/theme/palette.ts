@@ -67,6 +67,12 @@ export const PALETTE = {
 		dark: "rgba(123, 53, 216, 0.18)", // dark theme subtle brand tint
 	},
 
+	// ── Glass overlays (for liquid glass tab bar) ───────────────────
+	glass: {
+		dark: "rgba(21, 10, 46, 0.75)",    // purple[800] at 75% opacity
+		light: "rgba(255, 255, 255, 0.80)", // white at 80% opacity
+	},
+
 	// ── Status Backgrounds ─────────────────────────────────────────
 	statusBackground: {
 		errorDark: "rgba(248, 113, 113, 0.12)",

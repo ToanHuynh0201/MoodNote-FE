@@ -40,6 +40,8 @@ yarn-error.*
 /ios
 /android
 
+#Environment
+.env
 
 #IDE
 .vscode
@@ -51,3 +53,5 @@ docs
 #CLAUDE
 CLAUDE.md
 .claude
+
+local.properties.txt

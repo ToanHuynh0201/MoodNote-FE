@@ -55,6 +55,7 @@ export const DARK_THEME: ThemeColors = {
 
 	nav: {
 		background: PALETTE.purple[800],
+		backgroundGlass: PALETTE.glass.dark,
 		activeIcon: PALETTE.purple[400],
 		inactiveIcon: PALETTE.neutral[400],
 		activeTint: PALETTE.purple[400],
