@@ -30,6 +30,7 @@ export const LIGHT_THEME: ThemeColors = {
 		secondary: PALETTE.purple[300],
 		highlight: PALETTE.highlight.orange,
 		surface: PALETTE.purple[100],
+		onPrimary: PALETTE.neutral.white,
 	},
 
 	border: {

@@ -29,6 +29,7 @@ export const DARK_THEME: ThemeColors = {
 		secondary: PALETTE.purple[300],
 		highlight: PALETTE.highlight.orange,
 		surface: PALETTE.brandSurface.dark,
+		onPrimary: PALETTE.neutral.white,
 	},
 
 	border: {

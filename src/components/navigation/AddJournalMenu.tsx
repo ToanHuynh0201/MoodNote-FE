@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useMemo, type ReactNode } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useEffect, useMemo } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
 	Easing,
 	useAnimatedStyle,
@@ -14,7 +13,14 @@ import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import type { ThemeColors } from "@/theme";
 import { s, vs } from "@/utils";
 
-const PANEL_HEIGHT = vs(200);
+type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
+
+// Must match TabBar constants so the popup sits just above the FAB
+const FAB_SIZE = s(58);
+const BAR_HEIGHT = vs(64);
+const NOTCH_HEIGHT = vs(14);
+// Bottom edge of the popup (notch tip) aligns with the FAB top edge
+const POPUP_BOTTOM = BAR_HEIGHT + FAB_SIZE / 2 + vs(8);
 
 interface AddJournalMenuProps {
 	visible: boolean;
@@ -22,13 +28,13 @@ interface AddJournalMenuProps {
 }
 
 interface MenuOptionProps {
-	icon: ReactNode;
+	iconName: IoniconName;
 	label: string;
 	onPress: () => void;
 	colors: ThemeColors;
 }
 
-function MenuOption({ icon, label, onPress, colors }: MenuOptionProps) {
+function MenuOption({ iconName, label, onPress, colors }: MenuOptionProps) {
 	const styles = useMemo(() => createOptionStyles(colors), [colors]);
 	return (
 		<Pressable
@@ -36,8 +42,10 @@ function MenuOption({ icon, label, onPress, colors }: MenuOptionProps) {
 			onPress={onPress}
 			accessibilityRole="button"
 			accessibilityLabel={label}>
-			<View style={styles.iconWrap}>{icon}</View>
 			<Text style={styles.label}>{label}</Text>
+			<View style={styles.iconWrap}>
+				<Ionicons name={iconName} size={s(20)} color={colors.brand.onPrimary} />
+			</View>
 		</Pressable>
 	);
 }
@@ -47,25 +55,25 @@ function createOptionStyles(colors: ThemeColors) {
 		option: {
 			flexDirection: "row",
 			alignItems: "center",
-			gap: SPACING[12],
+			justifyContent: "space-between",
 			paddingVertical: SPACING[14],
 			paddingHorizontal: SPACING[20],
 		},
 		optionPressed: {
-			backgroundColor: colors.background.elevated,
+			backgroundColor: colors.brand.primaryPressed,
 		},
 		iconWrap: {
 			width: s(40),
 			height: s(40),
 			borderRadius: RADIUS.md,
-			backgroundColor: colors.brand.surface,
+			backgroundColor: colors.brand.primaryPressed,
 			alignItems: "center",
 			justifyContent: "center",
 		},
 		label: {
 			fontSize: FONT_SIZE[15],
 			lineHeight: LINE_HEIGHT.normal,
-			color: colors.text.primary,
+			color: colors.brand.onPrimary,
 			fontWeight: "500",
 		},
 	});
@@ -73,112 +81,84 @@ function createOptionStyles(colors: ThemeColors) {
 
 export function AddJournalMenu({ visible, onDismiss }: AddJournalMenuProps) {
 	const colors = useThemeColors();
-	const insets = useSafeAreaInsets();
-	const styles = useMemo(() => createStyles(colors, insets.bottom), [colors, insets.bottom]);
+	const styles = useMemo(() => createStyles(colors), [colors]);
 
-	const translateY = useSharedValue(PANEL_HEIGHT);
-	const backdropOpacity = useSharedValue(0);
+	const opacity = useSharedValue(0);
+	const translateY = useSharedValue(vs(8));
 
 	useEffect(() => {
-		const timing = { duration: 300, easing: Easing.out(Easing.cubic) };
 		if (visible) {
-			backdropOpacity.value = withTiming(1, { duration: 250 });
-			translateY.value = withTiming(0, timing);
+			opacity.value = withTiming(1, { duration: 180 });
+			translateY.value = withTiming(0, { duration: 220, easing: Easing.out(Easing.cubic) });
 		} else {
-			backdropOpacity.value = withTiming(0, { duration: 200 });
-			translateY.value = withTiming(PANEL_HEIGHT, timing);
+			opacity.value = withTiming(0, { duration: 160 });
+			translateY.value = withTiming(vs(8), {
+				duration: 180,
+				easing: Easing.in(Easing.cubic),
+			});
 		}
-	}, [visible, translateY, backdropOpacity]);
+	}, [visible, opacity, translateY]);
 
-	const backdropStyle = useAnimatedStyle(() => ({
-		opacity: backdropOpacity.value,
-	}));
-
-	const panelStyle = useAnimatedStyle(() => ({
+	const animStyle = useAnimatedStyle(() => ({
+		opacity: opacity.value,
 		transform: [{ translateY: translateY.value }],
 	}));
 
 	return (
-		<Modal
-			visible={visible}
-			transparent
-			statusBarTranslucent
-			animationType="none"
-			onRequestClose={onDismiss}>
-			<View style={styles.root} pointerEvents="box-none">
-				{/* Backdrop */}
-				<Animated.View style={[styles.backdrop, backdropStyle]} pointerEvents="auto">
-					<Pressable style={StyleSheet.absoluteFillObject} onPress={onDismiss} />
-				</Animated.View>
-
-				{/* Sliding panel */}
-				<Animated.View style={[styles.panel, panelStyle]}>
-					<View style={styles.handle} />
-					<MenuOption
-						icon={
-							<Ionicons
-								name="create-outline"
-								size={s(22)}
-								color={colors.brand.primary}
-							/>
-						}
-						label="Viết nhật ký"
-						onPress={onDismiss}
-						colors={colors}
-					/>
-					<View style={styles.divider} />
-					<MenuOption
-						icon={
-							<Ionicons
-								name="mic-outline"
-								size={s(22)}
-								color={colors.brand.primary}
-							/>
-						}
-						label="Nhật ký bằng giọng nói"
-						onPress={onDismiss}
-						colors={colors}
-					/>
-				</Animated.View>
+		<Animated.View
+			style={[styles.container, animStyle]}
+			pointerEvents={visible ? "box-none" : "none"}>
+			<View style={styles.card}>
+				<MenuOption
+					iconName="create-outline"
+					label="Viết nhật ký"
+					onPress={onDismiss}
+					colors={colors}
+				/>
+				<View style={styles.divider} />
+				<MenuOption
+					iconName="mic-outline"
+					label="Nhật ký bằng giọng nói"
+					onPress={onDismiss}
+					colors={colors}
+				/>
 			</View>
-		</Modal>
+			{/* Notch/tail pointing down toward FAB */}
+			<View style={styles.notch} />
+		</Animated.View>
 	);
 }
 
-function createStyles(colors: ThemeColors, bottomInset: number) {
+function createStyles(colors: ThemeColors) {
 	return StyleSheet.create({
-		root: {
-			flex: 1,
-			justifyContent: "flex-end",
+		container: {
+			position: "absolute",
+			bottom: POPUP_BOTTOM,
+			left: 0,
+			right: 0,
+			alignItems: "center",
 		},
-		backdrop: {
-			...StyleSheet.absoluteFillObject,
-			backgroundColor: colors.background.overlay,
-		},
-		panel: {
-			backgroundColor: colors.background.elevated,
-			borderTopLeftRadius: RADIUS.xl,
-			borderTopRightRadius: RADIUS.xl,
-			paddingBottom: bottomInset + SPACING[8],
-			// Shadow
+		card: {
+			backgroundColor: colors.brand.primary,
+			borderRadius: RADIUS.xl,
+			minWidth: s(240),
+			overflow: "hidden",
 			shadowColor: colors.shadow,
-			shadowOffset: { width: 0, height: -vs(4) },
-			shadowOpacity: 0.2,
+			shadowOffset: { width: 0, height: vs(4) },
+			shadowOpacity: 0.25,
 			shadowRadius: s(12),
 			elevation: 16,
 		},
-		handle: {
-			width: s(40),
-			height: vs(4),
-			borderRadius: RADIUS.full,
-			backgroundColor: colors.border.subtle,
-			alignSelf: "center",
-			marginTop: SPACING[12],
-			marginBottom: SPACING[4],
+		notch: {
+			width: s(22),
+			height: NOTCH_HEIGHT,
+			backgroundColor: colors.brand.primary,
+			borderBottomLeftRadius: RADIUS.sm,
+			borderBottomRightRadius: RADIUS.sm,
 		},
 		divider: {
 			height: 1,
-			backgroundColor: colors.divider,
+			backgroundColor: colors.brand.primaryPressed,
 			marginHorizontal: SPACING[20],
 		},
 	});

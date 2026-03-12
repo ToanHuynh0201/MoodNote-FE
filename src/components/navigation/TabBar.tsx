@@ -4,6 +4,8 @@ import { BlurView } from "expo-blur";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
+	Extrapolation,
+	interpolate,
 	useAnimatedStyle,
 	useSharedValue,
 	withSpring,
@@ -68,6 +70,12 @@ function TabItem({ label, routeName, isFocused, onPress, onLongPress, colors }: 
 		transform: [{ scale: 0.88 + progress.value * 0.12 }],
 	}));
 
+	// Label container: height collapses to 0 when unfocused so it doesn't push icon up
+	const labelContainerStyle = useAnimatedStyle(() => ({
+		height: interpolate(progress.value, [0, 1], [0, LINE_HEIGHT.tight], Extrapolation.CLAMP),
+		marginTop: interpolate(progress.value, [0, 1], [0, SPACING[4]], Extrapolation.CLAMP),
+	}));
+
 	const labelAnimStyle = useAnimatedStyle(() => ({
 		opacity: withTiming(progress.value, { duration: 150 }),
 		transform: [{ translateY: (1 - progress.value) * 4 }],
@@ -100,9 +108,11 @@ function TabItem({ label, routeName, isFocused, onPress, onLongPress, colors }: 
 				<Animated.View style={iconAnimStyle}>
 					<Ionicons name={iconName} size={s(22)} color={iconColor} />
 				</Animated.View>
-				<Animated.Text style={[itemStyles.label, { color: labelColor }, labelAnimStyle]}>
-					{label}
-				</Animated.Text>
+				<Animated.View style={[itemStyles.labelContainer, labelContainerStyle]}>
+					<Animated.Text style={[itemStyles.label, { color: labelColor }, labelAnimStyle]}>
+						{label}
+					</Animated.Text>
+				</Animated.View>
 			</Animated.View>
 		</Pressable>
 	);
@@ -118,7 +128,10 @@ function createItemStyles(colors: ThemeColors) {
 		},
 		inner: {
 			alignItems: "center",
-			gap: SPACING[4],
+		},
+		labelContainer: {
+			overflow: "hidden",
+			alignItems: "center",
 		},
 		label: {
 			fontSize: FONT_SIZE[11],
@@ -196,6 +209,15 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
 	return (
 		<>
+			{/* Transparent full-screen dismiss layer — captures taps outside popup */}
+			{menuOpen && (
+				<Pressable
+					style={StyleSheet.absoluteFillObject}
+					onPress={handleMenuDismiss}
+					accessible={false}
+				/>
+			)}
+
 			{/* Floating tab bar wrapper — positions bar above safe area */}
 			<View style={styles.wrapper} pointerEvents="box-none">
 				{/* BlurView for liquid glass effect */}
@@ -229,9 +251,10 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 						<Ionicons name="reorder-three" size={s(28)} color={colors.text.inverse} />
 					</Animated.View>
 				</Pressable>
-			</View>
 
-			<AddJournalMenu visible={menuOpen} onDismiss={handleMenuDismiss} />
+				{/* Popup menu — inline, positioned above the FAB */}
+				<AddJournalMenu visible={menuOpen} onDismiss={handleMenuDismiss} />
+			</View>
 		</>
 	);
 }

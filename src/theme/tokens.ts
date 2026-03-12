@@ -51,6 +51,8 @@ export interface ThemeColors {
 		highlight: string;
 		/** Subtle brand-tinted background — chips, tags, badges */
 		surface: string;
+		/** Text and icons rendered on top of brand.primary surfaces */
+		onPrimary: string;
 	};
 
 	border: {
