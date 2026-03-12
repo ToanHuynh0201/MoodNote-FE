@@ -22,6 +22,7 @@ export default function RegisterScreen() {
 	const [passwordVisible, setPasswordVisible] = useState(false);
 	const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
+	const nameRef = useRef<RNTextInput>(null);
 	const usernameRef = useRef<RNTextInput>(null);
 	const emailRef = useRef<RNTextInput>(null);
 	const passwordRef = useRef<RNTextInput>(null);
@@ -29,7 +30,7 @@ export default function RegisterScreen() {
 
 	const { getFieldProps, submitForm, isSubmitting, serverError } = useForm({
 		schema: registerSchema,
-		defaultValues: { username: "", email: "", password: "", confirmPassword: "" },
+		defaultValues: { name: "", username: "", email: "", password: "", confirmPassword: "" },
 		onSubmit: async (values) => {
 			await register(values);
 			router.push({ pathname: ROUTES.VERIFY_EMAIL, params: { email: values.email } });
@@ -48,6 +49,7 @@ export default function RegisterScreen() {
 		router.push(ROUTES.LOGIN);
 	}, []);
 
+	const focusUsername = useCallback(() => usernameRef.current?.focus(), []);
 	const focusEmail = useCallback(() => emailRef.current?.focus(), []);
 	const focusPassword = useCallback(() => passwordRef.current?.focus(), []);
 	const focusConfirmPassword = useCallback(() => confirmPasswordRef.current?.focus(), []);
@@ -80,6 +82,17 @@ export default function RegisterScreen() {
 				{/* Form */}
 				<Animated.View entering={FadeInDown.duration(400).delay(160)} style={styles.form}>
 					<Input
+						ref={nameRef}
+						label="Họ và tên"
+						placeholder="Nguyễn Văn A"
+						autoCorrect={false}
+						returnKeyType="next"
+						onSubmitEditing={focusUsername}
+						leftIcon={<Feather name="user" size={s(18)} color={colors.iconDefault} />}
+						{...getFieldProps("name")}
+					/>
+
+					<Input
 						ref={usernameRef}
 						label="Tên đăng nhập"
 						placeholder="username"
@@ -87,7 +100,7 @@ export default function RegisterScreen() {
 						autoCorrect={false}
 						returnKeyType="next"
 						onSubmitEditing={focusEmail}
-						leftIcon={<Feather name="user" size={s(18)} color={colors.iconDefault} />}
+						leftIcon={<Feather name="at-sign" size={s(18)} color={colors.iconDefault} />}
 						{...getFieldProps("username")}
 					/>
 

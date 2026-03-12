@@ -26,7 +26,6 @@ export default function ForgotPasswordScreen() {
 
 	const [step, setStep] = useState<Step>(1);
 	const [email, setEmail] = useState("");
-	const [resetToken, setResetToken] = useState("");
 	const [resendTimer, setResendTimer] = useState(0);
 	const [isResending, setIsResending] = useState(false);
 	const [passwordVisible, setPasswordVisible] = useState(false);
@@ -63,8 +62,7 @@ export default function ForgotPasswordScreen() {
 		schema: verifyOtpSchema,
 		defaultValues: { otp: "" },
 		onSubmit: async (values) => {
-			const token = await verifyResetOtp({ email, otp: values.otp });
-			setResetToken(token);
+			await verifyResetOtp({ email, otp: values.otp });
 			setStep(3);
 		},
 	});
@@ -75,7 +73,7 @@ export default function ForgotPasswordScreen() {
 		schema: newPasswordSchema,
 		defaultValues: { password: "", confirmPassword: "" },
 		onSubmit: async (values) => {
-			await resetPassword({ resetToken, password: values.password });
+			await resetPassword({ email, password: values.password, confirmPassword: values.confirmPassword });
 			router.replace(ROUTES.LOGIN);
 		},
 	});

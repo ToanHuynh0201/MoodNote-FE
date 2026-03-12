@@ -25,10 +25,12 @@ export type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const registerSchema = z
 	.object({
+		name: z.string().min(2, "Tên phải có ít nhất 2 ký tự").max(50, "Tên không quá 50 ký tự"),
 		username: z
 			.string()
 			.min(3, "Tên đăng nhập phải có ít nhất 3 ký tự")
-			.max(50, "Tên đăng nhập không quá 50 ký tự"),
+			.max(30, "Tên đăng nhập không quá 30 ký tự")
+			.regex(/^[a-z0-9_]+$/, "Tên đăng nhập chỉ được chứa a-z, 0-9 và _"),
 		email: emailSchema,
 		password: passwordSchema,
 		confirmPassword: z.string().min(1, "Please confirm your password"),

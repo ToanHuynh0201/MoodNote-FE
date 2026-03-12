@@ -24,7 +24,10 @@ export const authService = {
 
 	// FR-01: Register new account
 	register: (payload: RegisterPayload) =>
-		api.post<ApiResponse<{ message: string }>>("/auth/register", payload),
+		api.post<ApiResponse<{ user: { id: string; email: string; username: string; name: string; createdAt: string } }>>(
+			"/auth/register",
+			payload,
+		),
 
 	// FR-01: Verify email with OTP sent after registration
 	verifyEmail: (payload: VerifyEmailPayload) =>
@@ -38,9 +41,9 @@ export const authService = {
 	forgotPassword: (payload: ForgotPasswordPayload) =>
 		api.post<ApiResponse<{ message: string }>>("/auth/forgot-password", payload),
 
-	// FR-03: Verify reset OTP — returns resetToken for next step
+	// FR-03: Verify reset OTP — confirms OTP is valid (no token returned)
 	verifyResetOtp: (payload: VerifyResetOtpPayload) =>
-		api.post<ApiResponse<{ resetToken: string }>>("/auth/verify-reset-otp", payload),
+		api.post<ApiResponse<null>>("/auth/verify-reset-otp", payload),
 
 	// FR-03: Reset password using resetToken from verifyResetOtp
 	resetPassword: (payload: ResetPasswordPayload) =>
@@ -51,5 +54,6 @@ export const authService = {
 		api.post<ApiResponse<{ message: string }>>("/auth/change-password", payload),
 
 	// Logout — invalidate tokens on server
-	logout: () => api.post<ApiResponse<{ message: string }>>("/auth/logout"),
+	logout: (payload: { refreshToken: string }) =>
+		api.post<ApiResponse<{ message: string }>>("/auth/logout", payload),
 };

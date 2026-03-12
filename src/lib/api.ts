@@ -133,15 +133,9 @@ class ApiService {
 					try {
 						const refreshResponse = await this._performTokenRefresh(refreshToken as string);
 
-						// Check response format: { success: true, data: { accessToken, refreshToken } }
 						if (refreshResponse.data.success === true && refreshResponse.data.data) {
-							const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-								refreshResponse.data.data;
+							const { accessToken: newAccessToken } = refreshResponse.data.data;
 							await setStorageItem(AUTH_CONFIG.ACCESS_TOKEN_STORAGE_KEY, newAccessToken);
-
-							if (newRefreshToken) {
-								await setStorageItem(AUTH_CONFIG.REFRESH_TOKEN_STORAGE_KEY, newRefreshToken);
-							}
 
 							// Update auth header for original request
 							originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -204,7 +198,7 @@ class ApiService {
 	 * @returns {boolean} Whether URL is login endpoint
 	 */
 	private _isLoginEndpoint(url: string | undefined) {
-		return url?.includes("login") || url?.includes("register") || url?.includes("auth");
+		return url?.includes("login") || url?.includes("register");
 	}
 
 	/**
@@ -224,7 +218,7 @@ class ApiService {
 	 * @returns {Promise} Refresh response with new tokens
 	 */
 	private async _performTokenRefresh(refreshToken: string) {
-		return axios.post<ApiResponse<{ accessToken: string; refreshToken: string }>>(
+		return axios.post<ApiResponse<{ accessToken: string }>>(
 			`${this.baseUrl}/auth/refresh`,
 			{ refreshToken },
 		);

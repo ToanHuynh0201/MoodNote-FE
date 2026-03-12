@@ -10,9 +10,11 @@ import type {
 	VerifyEmailPayload,
 	VerifyResetOtpPayload,
 } from "@/types/user.types";
+import { logError } from "@/utils/error";
 import {
 	clearStorage,
 	getAuthToken,
+	getStorageItem,
 	getUserData,
 	setAuthToken,
 	setStorageItem,
@@ -35,7 +37,7 @@ interface AuthContextValue extends AuthState {
 	forgotPassword: (payload: ForgotPasswordPayload) => Promise<void>;
 	verifyEmail: (payload: VerifyEmailPayload) => Promise<void>;
 	resendVerification: (payload: ResendVerificationPayload) => Promise<void>;
-	verifyResetOtp: (payload: VerifyResetOtpPayload) => Promise<string>;
+	verifyResetOtp: (payload: VerifyResetOtpPayload) => Promise<void>;
 	resetPassword: (payload: ResetPasswordPayload) => Promise<void>;
 }
 
@@ -83,6 +85,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		await Promise.all([
 			await setAuthToken(accessToken),
 			await setStorageItem(AUTH_CONFIG.REFRESH_TOKEN_STORAGE_KEY, refreshToken),
+
 			setUserData(user),
 		]);
 
@@ -90,16 +93,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	}, []);
 
 	const register = useCallback(async (formValues: RegisterFormValues) => {
-		// Strip confirmPassword — only username + email + password are sent to the API
-		const { confirmPassword: _omit, ...payload } = formValues;
-		await authService.register(payload);
+		await authService.register(formValues);
 	}, []);
 
 	const logout = useCallback(async () => {
 		try {
-			await authService.logout();
-		} catch {
-			// ignore server errors on logout
+			const refreshToken = await getStorageItem<string>(AUTH_CONFIG.REFRESH_TOKEN_STORAGE_KEY);
+			if (refreshToken) await authService.logout({ refreshToken });
+		} catch (err) {
+			logError(err, { context: "logout" });
 		} finally {
 			await clearStorage();
 			setState({ user: null, isAuthenticated: false, isLoading: false });
@@ -118,9 +120,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		await authService.resendVerification(payload);
 	}, []);
 
-	const verifyResetOtp = useCallback(async (payload: VerifyResetOtpPayload): Promise<string> => {
-		const response = await authService.verifyResetOtp(payload);
-		return response.data.data.resetToken;
+	const verifyResetOtp = useCallback(async (payload: VerifyResetOtpPayload): Promise<void> => {
+		await authService.verifyResetOtp(payload);
 	}, []);
 
 	const resetPassword = useCallback(async (payload: ResetPasswordPayload) => {

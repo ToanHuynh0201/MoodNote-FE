@@ -3,6 +3,8 @@
 export interface User {
 	id: string;
 	email: string;
+	username: string;
+	name: string;
 	createdAt: string;
 	lastLogin: string;
 	isVerified: boolean;
@@ -19,15 +21,12 @@ export interface LoginPayload {
 	password: string;
 }
 
-/**
- * API payload for registration — `confirmPassword` is stripped before sending.
- * The form collects `RegisterFormValues` (from auth.schemas.ts) which includes
- * `confirmPassword` for UI validation, then omits it before calling the API.
- */
 export interface RegisterPayload {
+	name: string;
 	username: string;
 	email: string;
 	password: string;
+	confirmPassword: string;
 }
 
 export interface ForgotPasswordPayload {
@@ -49,8 +48,9 @@ export interface VerifyResetOtpPayload {
 }
 
 export interface ResetPasswordPayload {
-	resetToken: string;
+	email: string;
 	password: string;
+	confirmPassword: string;
 }
 
 export interface ChangePasswordPayload {

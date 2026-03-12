@@ -5,8 +5,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 // Placeholder home screen — shown after successful login
 // TODO: Replace with full app once other features are implemented
 
+import { ROUTES } from "@/constants";
 import { useAuth, useThemeColors } from "@/hooks";
 import type { ThemeColors } from "@/theme";
+import { router } from "expo-router";
 
 export default function HomeScreen() {
 	const colors = useThemeColors();
@@ -15,6 +17,8 @@ export default function HomeScreen() {
 
 	const handleLogout = useCallback(async () => {
 		await logout();
+
+		router.replace(ROUTES.LOGIN);
 	}, [logout]);
 
 	return (
