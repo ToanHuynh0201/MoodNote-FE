@@ -7,6 +7,7 @@ export default function AppLayout() {
 		<ProtectedRoute>
 			<Stack screenOptions={{ headerShown: false }}>
 				<Stack.Screen name="(tabs)" />
+				<Stack.Screen name="journal" />
 			</Stack>
 		</ProtectedRoute>
 	);

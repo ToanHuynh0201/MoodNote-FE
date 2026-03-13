@@ -70,6 +70,11 @@ export const ROUTES = {
 	TAB_JOURNAL: "/(app)/(tabs)/journal" as const,
 	TAB_STATISTICS: "/(app)/(tabs)/statistics" as const,
 	TAB_PROFILE: "/(app)/(tabs)/profile" as const,
+	JOURNAL_CREATE: "/(app)/journal/create" as const,
+	JOURNAL_DETAIL: (id: string) => ({
+		pathname: "/(app)/journal/[id]" as const,
+		params: { id },
+	}),
 };
 
 export const THEME_STORAGE_KEY = "moodnote_theme";
