@@ -9,7 +9,7 @@ import {
 } from "@/db";
 import { entryService } from "@/services";
 import type { EntryListItem, EntryPagination, UseEntriesResult } from "@/types/entry.types";
-import { logError, parseError } from "@/utils";
+import { logError } from "@/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSync } from "./useSync";
 
@@ -44,19 +44,19 @@ export function useEntries(): UseEntriesResult {
 
 	/** Fetch all pages from server and upsert into local DB */
 	const syncFromServer = useCallback(async () => {
-		try {
-			let page = 1;
-			let hasMore = true;
-			while (hasMore) {
-				const res = await entryService.getList({ page, limit: PAGE_LIMIT });
-				const { entries: fetched, pagination } = res.data.data;
-				await upsertListFromServer(fetched);
-				hasMore = page < pagination.totalPages;
-				page++;
-				if (page > 20) break; // safety cap
+		let page = 1;
+		let hasMore = true;
+		while (hasMore) {
+			const result = await entryService.getList({ page, limit: PAGE_LIMIT });
+			if (!result.success) {
+				logError(result.error, { context: "useEntries.syncFromServer" });
+				break;
 			}
-		} catch (err) {
-			logError(err, { context: "useEntries.syncFromServer" });
+			const { entries: fetched, pagination } = result.data;
+			await upsertListFromServer(fetched);
+			hasMore = page < pagination.totalPages;
+			page++;
+			if (page > 20) break; // safety cap
 		}
 	}, []);
 
@@ -73,8 +73,7 @@ export function useEntries(): UseEntriesResult {
 					await loadFromDb();
 				}
 			} catch (err) {
-				const { message } = parseError(err);
-				setError(message);
+				setError(err instanceof Error ? err.message : "An unexpected error occurred.");
 			} finally {
 				setIsLoading(false);
 			}
@@ -102,8 +101,7 @@ export function useEntries(): UseEntriesResult {
 			await loadFromDb();
 			setDisplayCount(PAGE_LIMIT);
 		} catch (err) {
-			const { message } = parseError(err);
-			setError(message);
+			setError(err instanceof Error ? err.message : "An unexpected error occurred.");
 		} finally {
 			setIsRefreshing(false);
 		}
@@ -123,15 +121,15 @@ export function useEntries(): UseEntriesResult {
 
 		// 2. If online, attempt server delete in background
 		if (isOnlineRef.current) {
-			try {
-				const serverId = await getEntryServerId(id);
-				if (serverId) {
-					await entryService.delete(serverId);
+			const serverId = await getEntryServerId(id);
+			if (serverId) {
+				const result = await entryService.delete(serverId);
+				if (!result.success) {
+					logError(result.error, { context: "useEntries.removeEntry server delete" });
+					// Leave as pending_delete — sync engine will retry
+				} else {
 					await hardDeleteEntry(id);
 				}
-			} catch (err) {
-				logError(err, { context: "useEntries.removeEntry server delete" });
-				// Leave as pending_delete — sync engine will retry
 			}
 		}
 	}, []);

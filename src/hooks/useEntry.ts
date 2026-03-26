@@ -11,7 +11,7 @@ import {
 } from "@/db";
 import { entryService } from "@/services";
 import type { Entry, UpdateEntryPayload, UseEntryResult } from "@/types/entry.types";
-import { logError, parseError } from "@/utils";
+import { logError } from "@/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSync } from "./useSync";
 
@@ -41,28 +41,30 @@ export function useEntry(id: string): UseEntryResult {
 						if (!local.contentFetched && isOnlineRef.current) {
 							const serverId = await getEntryServerId(id);
 							if (serverId) {
-								try {
-									const res = await entryService.getById(serverId);
-									await upsertFromServer(res.data.data.entry);
+								const res = await entryService.getById(serverId);
+								if (!res.success) {
+									logError(res.error, { context: "useEntry.fetchFullContent" });
+									// Non-fatal — continue showing stub content
+								} else {
+									await upsertFromServer(res.data.entry);
 									const refreshed = await getEntryById(id);
 									if (!cancelled && refreshed) setEntry(refreshed);
-								} catch (fetchErr) {
-									logError(fetchErr, { context: "useEntry.fetchFullContent" });
-									// Non-fatal — continue showing stub content
 								}
 							}
 						}
 					} else if (isOnlineRef.current) {
 						const res = await entryService.getById(id);
-						if (!cancelled) setEntry(res.data.data.entry);
+						if (!cancelled) {
+							if (!res.success) setError(res.error);
+							else setEntry(res.data.entry);
+						}
 					} else {
 						setError("Entry not found");
 					}
 				}
 			} catch (err) {
 				if (!cancelled) {
-					const { message } = parseError(err);
-					setError(message);
+					setError(err instanceof Error ? err.message : "An unexpected error occurred.");
 				}
 			} finally {
 				if (!cancelled) setIsLoading(false);
@@ -116,8 +118,10 @@ export function useEntry(id: string): UseEntryResult {
 				if (serverId) {
 					entryService
 						.update(serverId, payload)
-						.then(() => markUpdateSynced(id))
-						.catch((err) => logError(err, { context: "useEntry.updateEntry server sync" }));
+						.then((result) => {
+							if (result.success) return markUpdateSynced(id);
+							logError(result.error, { context: "useEntry.updateEntry server sync" });
+						});
 				}
 			}
 
@@ -132,11 +136,11 @@ export function useEntry(id: string): UseEntryResult {
 		if (isOnlineRef.current) {
 			const serverId = await getEntryServerId(id);
 			if (serverId) {
-				try {
-					await entryService.delete(serverId);
+				const result = await entryService.delete(serverId);
+				if (!result.success) {
+					logError(result.error, { context: "useEntry.deleteEntry server delete" });
+				} else {
 					await hardDeleteEntry(id);
-				} catch (err) {
-					logError(err, { context: "useEntry.deleteEntry server delete" });
 				}
 			}
 		}

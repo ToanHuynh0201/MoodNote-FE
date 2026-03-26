@@ -8,7 +8,7 @@ import {
 	upsertListFromServer,
 } from "@/db";
 import { entryService } from "@/services/entry.service";
-import { logError } from "@/utils/error";
+import { ApiError, logError } from "@/utils/error";
 import NetInfo, { type NetInfoState } from "@react-native-community/netinfo";
 import { createContext, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { SyncContextValue } from "@/types/contexts.types";
@@ -64,19 +64,20 @@ export function SyncProvider({ children }: Props) {
 						>[0]["content"];
 						const tags = JSON.parse(row.tags) as string[];
 
-						const res = await entryService.create({
+						const result = await entryService.create({
 							title: row.title ?? undefined,
 							content: contentDelta,
 							entryDate: row.entry_date,
 							inputMethod: row.input_method as "TEXT" | "VOICE",
 							tags,
 						});
+						if (!result.success) throw new ApiError(result.error, result.status ?? 500, result.code);
 						await markSynced(
 							row.local_id,
-							res.data.data.entry.id,
-							res.data.data.entry.analysisStatus,
+							result.data.entry.id,
+							result.data.entry.analysisStatus,
 						);
-						console.log("[Sync] OK CREATE local_id=" + row.local_id + " -> server_id=" + res.data.data.entry.id);
+						console.log("[Sync] OK CREATE local_id=" + row.local_id + " -> server_id=" + result.data.entry.id);
 					} else if (row.sync_status === "pending_update") {
 						if (!row.server_id) {
 							// Never reached server — treat as pending_create
@@ -85,30 +86,32 @@ export function SyncProvider({ children }: Props) {
 								typeof entryService.create
 							>[0]["content"];
 							const tags = JSON.parse(row.tags) as string[];
-							const res = await entryService.create({
+							const result = await entryService.create({
 								title: row.title ?? undefined,
 								content: contentDelta,
 								entryDate: row.entry_date,
 								inputMethod: row.input_method as "TEXT" | "VOICE",
 								tags,
 							});
+							if (!result.success) throw new ApiError(result.error, result.status ?? 500, result.code);
 							await markSynced(
 								row.local_id,
-								res.data.data.entry.id,
-								res.data.data.entry.analysisStatus,
+								result.data.entry.id,
+								result.data.entry.analysisStatus,
 							);
-							console.log("[Sync] OK UPDATE->CREATE local_id=" + row.local_id + " -> server_id=" + res.data.data.entry.id);
+							console.log("[Sync] OK UPDATE->CREATE local_id=" + row.local_id + " -> server_id=" + result.data.entry.id);
 						} else {
 							console.log("[Sync] UP UPDATE local_id=" + row.local_id + " server_id=" + row.server_id + " title=" + (row.title ?? "(no title)"));
 							const contentDelta = JSON.parse(row.content) as Parameters<
 								typeof entryService.update
 							>[1]["content"];
 							const tags = JSON.parse(row.tags) as string[];
-							await entryService.update(row.server_id, {
+							const result = await entryService.update(row.server_id, {
 								title: row.title ?? undefined,
 								content: contentDelta,
 								tags,
 							});
+							if (!result.success) throw new ApiError(result.error, result.status ?? 500, result.code);
 							await markUpdateSynced(row.local_id);
 							console.log("[Sync] OK UPDATE local_id=" + row.local_id);
 						}
@@ -120,15 +123,13 @@ export function SyncProvider({ children }: Props) {
 							console.log("[Sync] OK DEL local_id=" + row.local_id);
 						} else {
 							console.log("[Sync] DEL local_id=" + row.local_id + " server_id=" + row.server_id);
-							try {
-								await entryService.delete(row.server_id);
-							} catch (err: unknown) {
+							const deleteResult = await entryService.delete(row.server_id);
+							if (!deleteResult.success) {
 								// 404 = server doesn't have it — clean up locally
-								const status = (err as { response?: { status?: number } })?.response?.status;
-								if (status === 404) {
+								if (deleteResult.status === 404) {
 									console.log("[Sync] DEL 404 on server - cleaning up locally");
 								} else {
-									throw err;
+									throw new ApiError(deleteResult.error, deleteResult.status ?? 500, deleteResult.code);
 								}
 							}
 							await hardDeleteEntry(row.local_id);
@@ -145,11 +146,11 @@ export function SyncProvider({ children }: Props) {
 			// After sync, refresh list from server if we processed anything
 			if (pending.length > 0) {
 				console.log("[Sync] DOWN refreshing list from server...");
-				try {
-					const res = await entryService.getList({ page: 1, limit: 100 });
-					await upsertListFromServer(res.data.data.entries);
-					console.log("[Sync] OK list refreshed - entries:", res.data.data.entries.length);
-				} catch {
+				const listResult = await entryService.getList({ page: 1, limit: 100 });
+				if (listResult.success) {
+					await upsertListFromServer(listResult.data.entries);
+					console.log("[Sync] OK list refreshed - entries:", listResult.data.entries.length);
+				} else {
 					console.log("[Sync] WARN list refresh failed (non-critical)");
 				}
 			}

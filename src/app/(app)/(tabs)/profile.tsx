@@ -1,14 +1,18 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar, Badge, Button, ToggleSwitch } from "@/components";
+import { Divider } from "@/components/ui/display/Divider";
 import { Input } from "@/components/ui/inputs/Input";
 import { ROUTES } from "@/constants";
 import { useAuth, useForm, useThemeColors, useThemeContext } from "@/hooks";
 import { updateProfileSchema } from "@/schemas";
 import { userService } from "@/services";
+import { ApiError } from "@/utils/error";
 import type { ThemeColors } from "@/theme";
 import { FONT_SIZE, RADIUS, SPACING } from "@/theme";
+import { s } from "@/utils";
 import { router } from "expo-router";
 
 // FR-05: Profile / settings screen
@@ -23,8 +27,9 @@ export default function ProfileScreen() {
 		schema: updateProfileSchema,
 		defaultValues: { name: user?.name ?? "", username: user?.username ?? "" },
 		onSubmit: async (values) => {
-			const response = await userService.updateMe(values);
-			await updateUser(response.data.data);
+			const result = await userService.updateMe(values);
+			if (!result.success) throw new ApiError(result.error, result.status ?? 400, result.code);
+			await updateUser(result.data);
 			setIsEditing(false);
 		},
 	});
@@ -109,8 +114,7 @@ export default function ProfileScreen() {
 				</View>
 
 				{/* Theme toggle */}
-				<View
-					style={styles.card}>
+				<View style={styles.card}>
 					<ToggleSwitch
 						label="Dark Mode"
 						sublabel={isDark ? "Dark theme active" : "Light theme active"}
@@ -119,9 +123,43 @@ export default function ProfileScreen() {
 					/>
 				</View>
 
+				{/* Notifications */}
+				<View style={styles.card}>
+					<Pressable
+						style={styles.menuRow}
+						onPress={() => router.push(ROUTES.NOTIFICATIONS as never)}
+						accessibilityLabel="Thông báo"
+						accessibilityRole="button">
+						<View style={styles.menuRowLeft}>
+							<Ionicons
+								name="notifications-outline"
+								size={s(20)}
+								color={colors.iconDefault}
+							/>
+							<Text style={styles.menuLabel}>Thông báo</Text>
+						</View>
+						<Ionicons name="chevron-forward" size={s(16)} color={colors.text.muted} />
+					</Pressable>
+					<Divider />
+					<Pressable
+						style={styles.menuRow}
+						onPress={() => router.push(ROUTES.NOTIFICATION_SETTINGS as never)}
+						accessibilityLabel="Cài đặt thông báo"
+						accessibilityRole="button">
+						<View style={styles.menuRowLeft}>
+							<Ionicons
+								name="settings-outline"
+								size={s(20)}
+								color={colors.iconDefault}
+							/>
+							<Text style={styles.menuLabel}>Cài đặt thông báo</Text>
+						</View>
+						<Ionicons name="chevron-forward" size={s(16)} color={colors.text.muted} />
+					</Pressable>
+				</View>
+
 				{/* Logout */}
-				<View
-					style={styles.card}>
+				<View style={styles.card}>
 					<Button title="Log Out" variant="danger" fullWidth onPress={handleLogout} />
 				</View>
 			</ScrollView>
@@ -183,6 +221,21 @@ function createStyles(colors: ThemeColors) {
 			backgroundColor: colors.status.errorBackground,
 			paddingHorizontal: SPACING[12],
 			paddingVertical: SPACING[8],
+		},
+		menuRow: {
+			flexDirection: "row",
+			alignItems: "center",
+			justifyContent: "space-between",
+			paddingVertical: SPACING[4],
+		},
+		menuRowLeft: {
+			flexDirection: "row",
+			alignItems: "center",
+			gap: SPACING[12],
+		},
+		menuLabel: {
+			fontSize: FONT_SIZE[15],
+			color: colors.text.primary,
 		},
 	});
 }

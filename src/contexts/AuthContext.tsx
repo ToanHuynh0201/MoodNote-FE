@@ -11,7 +11,7 @@ import type {
 	VerifyEmailPayload,
 	VerifyResetOtpPayload,
 } from "@/types/user.types";
-import { logError } from "@/utils/error";
+import { ApiError, logError } from "@/utils/error";
 import {
 	clearStorage,
 	getAuthToken,
@@ -21,7 +21,10 @@ import {
 	setStorageItem,
 	setUserData,
 } from "@/utils/storage";
+import { AuthorizationStatus, getMessaging, getToken, requestPermission } from "@react-native-firebase/messaging";
 import { createContext, useCallback, useEffect, useState, type ReactNode } from "react";
+import { Platform } from "react-native";
+import { notificationService } from "@/services/notification.service";
 
 // ─── Internal state ────────────────────────────────────────────────────────────
 
@@ -48,6 +51,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		isLoading: true,
 	});
 
+	// ─── FCM helpers ─────────────────────────────────────────────────────────────
+
+	// FR-21: Register FCM device token after authentication
+	const registerFcmToken = useCallback(async (): Promise<void> => {
+		try {
+			const authStatus = await requestPermission(getMessaging());
+			const isAuthorized =
+				authStatus === AuthorizationStatus.AUTHORIZED ||
+				authStatus === AuthorizationStatus.PROVISIONAL;
+			if (!isAuthorized) return;
+
+			const token = await getToken(getMessaging());
+			const platform =
+				Platform.OS === "android" || Platform.OS === "ios" ? Platform.OS : undefined;
+			await notificationService.registerDeviceToken({ token, platform });
+		} catch (err) {
+			logError(err, { context: "AuthContext.registerFcmToken" });
+		}
+	}, []);
+
+	// FR-21: Unregister FCM device token on logout
+	const unregisterFcmToken = useCallback(async (): Promise<void> => {
+		try {
+			const token = await getToken(getMessaging());
+			await notificationService.deleteDeviceToken({ token });
+		} catch (err) {
+			logError(err, { context: "AuthContext.unregisterFcmToken" });
+		}
+	}, []);
+
 	// Restore session from secure storage on app start
 	useEffect(() => {
 		(async () => {
@@ -56,6 +89,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 				if (token && user) {
 					setState({ user, isAuthenticated: true, isLoading: false });
+					void registerFcmToken(); // FR-21
 				} else {
 					setState((s) => ({ ...s, isLoading: false }));
 				}
@@ -68,9 +102,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	// ─── Actions ─────────────────────────────────────────────────────────────────
 
 	const login = useCallback(async (payload: LoginPayload) => {
-		const response = await authService.login(payload);
+		const result = await authService.login(payload);
+		if (!result.success) throw new ApiError(result.error, result.status ?? 400, result.code);
 
-		const { user, accessToken, refreshToken } = response.data.data;
+		const { user, accessToken, refreshToken } = result.data;
 
 		await Promise.all([
 			await setAuthToken(accessToken),
@@ -80,42 +115,53 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		]);
 
 		setState({ user, isAuthenticated: true, isLoading: false });
-	}, []);
+		void registerFcmToken(); // FR-21
+	}, [registerFcmToken]);
 
 	const register = useCallback(async (formValues: RegisterFormValues) => {
-		await authService.register(formValues);
+		const result = await authService.register(formValues);
+		if (!result.success) throw new ApiError(result.error, result.status ?? 400, result.code);
 	}, []);
 
 	const logout = useCallback(async () => {
+		void unregisterFcmToken(); // FR-21 — fire-and-forget, không block logout
 		try {
 			const refreshToken = await getStorageItem<string>(AUTH_CONFIG.REFRESH_TOKEN_STORAGE_KEY);
-			if (refreshToken) await authService.logout({ refreshToken });
+			if (refreshToken) {
+				const result = await authService.logout({ refreshToken });
+				if (!result.success) logError(result.error, { context: "logout" });
+			}
 		} catch (err) {
 			logError(err, { context: "logout" });
 		} finally {
 			await clearStorage();
 			setState({ user: null, isAuthenticated: false, isLoading: false });
 		}
-	}, []);
+	}, [unregisterFcmToken]);
 
 	const forgotPassword = useCallback(async (payload: ForgotPasswordPayload) => {
-		await authService.forgotPassword(payload);
+		const result = await authService.forgotPassword(payload);
+		if (!result.success) throw new ApiError(result.error, result.status ?? 400, result.code);
 	}, []);
 
 	const verifyEmail = useCallback(async (payload: VerifyEmailPayload) => {
-		await authService.verifyEmail(payload);
+		const result = await authService.verifyEmail(payload);
+		if (!result.success) throw new ApiError(result.error, result.status ?? 400, result.code);
 	}, []);
 
 	const resendVerification = useCallback(async (payload: ResendVerificationPayload) => {
-		await authService.resendVerification(payload);
+		const result = await authService.resendVerification(payload);
+		if (!result.success) throw new ApiError(result.error, result.status ?? 400, result.code);
 	}, []);
 
 	const verifyResetOtp = useCallback(async (payload: VerifyResetOtpPayload): Promise<void> => {
-		await authService.verifyResetOtp(payload);
+		const result = await authService.verifyResetOtp(payload);
+		if (!result.success) throw new ApiError(result.error, result.status ?? 400, result.code);
 	}, []);
 
 	const resetPassword = useCallback(async (payload: ResetPasswordPayload) => {
-		await authService.resetPassword(payload);
+		const result = await authService.resetPassword(payload);
+		if (!result.success) throw new ApiError(result.error, result.status ?? 400, result.code);
 	}, []);
 
 	const updateUser = useCallback(async (user: User) => {

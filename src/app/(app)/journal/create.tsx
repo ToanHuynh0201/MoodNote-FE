@@ -104,21 +104,21 @@ export default function CreateEntryScreen() {
 
 			// Background server create if online
 			if (isOnlineRef.current) {
-				try {
-					const res = await entryService.create({
-						content: deltaRef.current,
-						title: title.trim() || undefined,
-						tags,
-						entryDate: today,
-						inputMethod: "TEXT",
-					});
+				const result = await entryService.create({
+					content: deltaRef.current,
+					title: title.trim() || undefined,
+					tags,
+					entryDate: today,
+					inputMethod: "TEXT",
+				});
+				if (!result.success) {
+					logError(result.error, { context: "create.tsx saveFn server create" });
+				} else {
 					await markSynced(
 						localId,
-						res.data.data.entry.id,
-						res.data.data.entry.analysisStatus,
+						result.data.entry.id,
+						result.data.entry.analysisStatus,
 					);
-				} catch (err) {
-					logError(err, { context: "create.tsx saveFn server create" });
 				}
 			}
 		} else {
@@ -142,8 +142,10 @@ export default function CreateEntryScreen() {
 							title: title.trim() || undefined,
 							tags,
 						})
-						.then(() => markUpdateSynced(currentId))
-						.catch((err) => logError(err, { context: "create.tsx saveFn server update" }));
+						.then((result) => {
+							if (result.success) return markUpdateSynced(currentId);
+							logError(result.error, { context: "create.tsx saveFn server update" });
+						});
 				}
 			}
 		}

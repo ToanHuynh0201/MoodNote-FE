@@ -5,3 +5,4 @@ export type * from "./offline.types";
 export type * from "./contexts.types";
 export type * from "./form.types";
 export type * from "./components";
+export type * from "./notification.types";

@@ -1,4 +1,5 @@
 import { ERROR_CODES, ERROR_MESSAGES } from "@/constants";
+import type { ApiResponse } from "@/types";
 import { isAxiosError } from "axios";
 
 export class ApiError extends Error {
@@ -52,44 +53,33 @@ export const parseError = (error: unknown): ApiError => {
 	return new ApiError(finalMessage, status, validCode);
 };
 
-type WrappedResponse = {
-	data?: {
-		status?: string;
-		code?: number;
-		data?: unknown;
-		pagination?: unknown;
-		message?: string;
-	};
-};
-
 /**
- * Simple service error handler - wraps async functions with error handling
- * @param {Function} asyncFn - Async function to wrap
- * @returns {Function} Wrapped function that returns standardized response
+ * Wraps an async service function with standardized error handling.
+ * Returns a typed success/failure object instead of throwing.
+ * @param asyncFn - Async function returning an Axios response with ApiResponse envelope
  */
-export const withErrorHandling = <TArgs extends unknown[], TReturn>(
-	asyncFn: (...args: TArgs) => Promise<TReturn>,
+export const withErrorHandling = <TArgs extends unknown[], TData>(
+	asyncFn: (...args: TArgs) => Promise<{ data: ApiResponse<TData> }>,
 ) => {
-	return async (...args: TArgs) => {
+	return async (...args: TArgs): Promise<
+		| { success: true; data: TData; message: string }
+		| { success: false; error: string; code: string; status?: number }
+	> => {
 		try {
 			const response = await asyncFn(...args);
-			const r = response as WrappedResponse;
 
-			// If response is successful, return it
-			if (r.data?.status === "success" || r.data?.code === 200) {
+			if (response.data?.success) {
 				return {
 					success: true,
-					data: r.data?.data,
-					pagination: r.data?.pagination,
-					message: r.data?.message,
+					data: response.data.data,
+					message: response.data.message ?? "",
 				};
 			}
 
-			// Response received but indicates failure — extract error details directly
 			return {
 				success: false,
-				error: r.data?.message ?? ERROR_MESSAGES.GENERIC_ERROR,
-				code: r.data?.code !== undefined ? String(r.data.code) : ERROR_CODES.INTERNAL_ERROR,
+				error: response.data?.message ?? ERROR_MESSAGES.GENERIC_ERROR,
+				code: ERROR_CODES.INTERNAL_ERROR,
 			};
 		} catch (error: unknown) {
 			const parsedError = parseError(error);
@@ -98,6 +88,7 @@ export const withErrorHandling = <TArgs extends unknown[], TReturn>(
 				success: false,
 				error: parsedError.message,
 				code: parsedError.code,
+				status: parsedError.status,
 			};
 		}
 	};

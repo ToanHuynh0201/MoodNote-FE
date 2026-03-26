@@ -54,4 +54,10 @@ docs
 CLAUDE.md
 .claude
 
+#Push notifications settings
+google-services.json
+
+
+
+local.properties
 local.properties.txt

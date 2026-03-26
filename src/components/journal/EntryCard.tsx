@@ -12,7 +12,7 @@ import { useThemeColors } from "@/hooks";
 import type { ThemeColors } from "@/theme";
 import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import type { EntryListItem } from "@/types/entry.types";
-import { s, vs } from "@/utils";
+import { s, vs, formatDateWithWeekday } from "@/utils";
 import { ANALYSIS_STATUS_LABELS } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge } from "../ui/display/Badge";
@@ -21,16 +21,6 @@ import { Card } from "../ui/display/Card";
 interface Props {
 	entry: EntryListItem;
 	onPress: () => void;
-}
-
-function formatEntryDate(isoDate: string): string {
-	const date = new Date(isoDate);
-	return date.toLocaleDateString("vi-VN", {
-		weekday: "short",
-		day: "2-digit",
-		month: "2-digit",
-		year: "numeric",
-	});
 }
 
 export function EntryCard({ entry, onPress }: Props) {
@@ -76,7 +66,7 @@ export function EntryCard({ entry, onPress }: Props) {
 					{/* Header row: date + offline icon + word count */}
 					<View style={styles.headerRow}>
 						<View style={styles.dateRow}>
-							<Text style={styles.date}>{formatEntryDate(entry.entryDate)}</Text>
+							<Text style={styles.date}>{formatDateWithWeekday(entry.entryDate)}</Text>
 							{entry.isOffline && (
 								<Ionicons
 									name="cloud-offline-outline"

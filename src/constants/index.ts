@@ -80,6 +80,8 @@ export const ROUTES = {
 		pathname: "/(app)/journal/[id]" as const,
 		params: { id },
 	}),
+	NOTIFICATIONS: "/(app)/notifications" as const,
+	NOTIFICATION_SETTINGS: "/(app)/notifications/settings" as const,
 };
 
 export const THEME_STORAGE_KEY = "moodnote_theme";

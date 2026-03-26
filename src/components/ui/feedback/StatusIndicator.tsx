@@ -1,18 +1,31 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 
+import { STATUS_INDICATOR_LABELS } from "@/constants";
 import { useThemeColors } from "@/hooks";
 import type { ThemeColors } from "@/theme";
 import { FONT_SIZE, SPACING } from "@/theme";
 import type { StatusIndicatorProps, StatusIndicatorStatus } from "@/types";
 import { s } from "@/utils";
-import { STATUS_INDICATOR_LABELS } from "@/constants";
 
 export function StatusIndicator({ status, showLabel = true }: StatusIndicatorProps) {
 	const colors = useThemeColors();
 	const pulseAnim = useRef(new Animated.Value(1)).current;
 	const styles = useMemo(() => createStyles(colors), [colors]);
 
+	function getDotColor(status: StatusIndicatorStatus, colors: ThemeColors): string {
+		switch (status) {
+			case "saving":
+				return colors.status.warning;
+			case "saved":
+			case "online":
+				return colors.status.success;
+			case "error":
+				return colors.status.error;
+			case "offline":
+				return colors.text.muted;
+		}
+	}
 	const dotColor = getDotColor(status, colors);
 
 	// Pulse animation while "saving"
@@ -46,20 +59,6 @@ export function StatusIndicator({ status, showLabel = true }: StatusIndicatorPro
 			{showLabel && <Text style={styles.label}>{STATUS_INDICATOR_LABELS[status]}</Text>}
 		</View>
 	);
-}
-
-function getDotColor(status: StatusIndicatorStatus, colors: ThemeColors): string {
-	switch (status) {
-		case "saving":
-			return colors.status.warning;
-		case "saved":
-		case "online":
-			return colors.status.success;
-		case "error":
-			return colors.status.error;
-		case "offline":
-			return colors.text.muted;
-	}
 }
 
 function createStyles(colors: ThemeColors) {
