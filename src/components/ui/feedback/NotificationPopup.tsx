@@ -51,13 +51,13 @@ const ICON_MAP: Record<NotificationPopupType, React.ComponentProps<typeof Ionico
 function getTypeColors(type: NotificationPopupType, colors: ThemeColors) {
 	switch (type) {
 		case "info":
-			return { bg: colors.status.infoBackground, accent: colors.status.info, icon: colors.status.info };
+			return { bg: colors.background.elevated, accent: colors.status.info, icon: colors.status.info };
 		case "success":
-			return { bg: colors.status.successBackground, accent: colors.status.success, icon: colors.status.success };
+			return { bg: colors.background.elevated, accent: colors.status.success, icon: colors.status.success };
 		case "warning":
-			return { bg: colors.status.warningBackground, accent: colors.status.warning, icon: colors.status.warning };
+			return { bg: colors.background.elevated, accent: colors.status.warning, icon: colors.status.warning };
 		case "error":
-			return { bg: colors.status.errorBackground, accent: colors.status.error, icon: colors.status.error };
+			return { bg: colors.background.elevated, accent: colors.status.error, icon: colors.status.error };
 	}
 }
 
@@ -72,23 +72,15 @@ export function NotificationPopupProvider({ children }: NotificationPopupProvide
 
 	const [popup, setPopup] = useState<PopupState | null>(null);
 	const slideAnim = useRef(new Animated.Value(POPUP_SLIDE_OFFSET)).current;
-	const opacityAnim = useRef(new Animated.Value(0)).current;
 	const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
 	const hide = useCallback(() => {
-		Animated.parallel([
-			Animated.timing(slideAnim, {
-				toValue: POPUP_SLIDE_OFFSET,
-				duration: 250,
-				useNativeDriver: true,
-			}),
-			Animated.timing(opacityAnim, {
-				toValue: 0,
-				duration: 250,
-				useNativeDriver: true,
-			}),
-		]).start(() => setPopup(null));
-	}, [slideAnim, opacityAnim]);
+		Animated.timing(slideAnim, {
+			toValue: POPUP_SLIDE_OFFSET,
+			duration: 250,
+			useNativeDriver: true,
+		}).start(() => setPopup(null));
+	}, [slideAnim]);
 
 	const show = useCallback(
 		(options: NotificationPopupOptions) => {
@@ -104,24 +96,16 @@ export function NotificationPopupProvider({ children }: NotificationPopupProvide
 
 			setPopup(newPopup);
 			slideAnim.setValue(POPUP_SLIDE_OFFSET);
-			opacityAnim.setValue(0);
 
-			Animated.parallel([
-				Animated.timing(slideAnim, {
-					toValue: 0,
-					duration: 350,
-					useNativeDriver: true,
-				}),
-				Animated.timing(opacityAnim, {
-					toValue: 1,
-					duration: 350,
-					useNativeDriver: true,
-				}),
-			]).start();
+			Animated.timing(slideAnim, {
+				toValue: 0,
+				duration: 350,
+				useNativeDriver: true,
+			}).start();
 
 			timerRef.current = setTimeout(hide, newPopup.duration);
 		},
-		[slideAnim, opacityAnim, hide],
+		[slideAnim, hide],
 	);
 
 	useEffect(() => {
@@ -146,7 +130,6 @@ export function NotificationPopupProvider({ children }: NotificationPopupProvide
 								backgroundColor: typeColors.bg,
 								borderLeftColor: typeColors.accent,
 								transform: [{ translateY: slideAnim }],
-								opacity: opacityAnim,
 							},
 						]}>
 						{/* Icon */}

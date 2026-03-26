@@ -13,7 +13,7 @@ import type { ThemeColors } from "@/theme";
 import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import type { EntryListItem } from "@/types/entry.types";
 import { s, vs, formatDateWithWeekday } from "@/utils";
-import { ANALYSIS_STATUS_LABELS } from "@/constants";
+import { ANALYSIS_STATUS_LABELS, SYNC_STATUS_LABELS, SYNC_STATUS_ICONS } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge } from "../ui/display/Badge";
 import { Card } from "../ui/display/Card";
@@ -54,6 +54,17 @@ export function EntryCard({ entry, onPress }: Props) {
 		}
 	}, [entry.analysisStatus, colors]);
 
+	const syncColor = useMemo(() => {
+		switch (entry.syncStatus) {
+			case "synced":
+				return colors.status.success;
+			case "pending_delete":
+				return colors.status.error;
+			default:
+				return colors.status.warning;
+		}
+	}, [entry.syncStatus, colors]);
+
 	return (
 		<Pressable
 			onPress={onPress}
@@ -63,19 +74,9 @@ export function EntryCard({ entry, onPress }: Props) {
 			accessibilityLabel={entry.title ?? "Nhật ký"}>
 			<Animated.View style={pressStyle}>
 				<Card variant="elevated" padding={SPACING[16]}>
-					{/* Header row: date + offline icon + word count */}
+					{/* Header row: date + word count */}
 					<View style={styles.headerRow}>
-						<View style={styles.dateRow}>
-							<Text style={styles.date}>{formatDateWithWeekday(entry.entryDate)}</Text>
-							{entry.isOffline && (
-								<Ionicons
-									name="cloud-offline-outline"
-									size={s(12)}
-									color={colors.status.warning}
-									accessibilityLabel="Chưa đồng bộ"
-								/>
-							)}
-						</View>
+						<Text style={styles.date}>{formatDateWithWeekday(entry.entryDate)}</Text>
 						<Badge
 							label={`${entry.wordCount} từ`}
 							size="sm"
@@ -109,12 +110,24 @@ export function EntryCard({ entry, onPress }: Props) {
 						</ScrollView>
 					)}
 
-					{/* Analysis status */}
+					{/* Analysis status + Sync status */}
 					<View style={styles.statusRow}>
-						<View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-						<Text style={[styles.statusText, { color: statusColor }]}>
-							{ANALYSIS_STATUS_LABELS[entry.analysisStatus] ?? entry.analysisStatus}
-						</Text>
+						<View style={styles.analysisBadge}>
+							<View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+							<Text style={[styles.statusText, { color: statusColor }]}>
+								{ANALYSIS_STATUS_LABELS[entry.analysisStatus] ?? entry.analysisStatus}
+							</Text>
+						</View>
+						<View style={styles.syncBadge}>
+							<Ionicons
+								name={SYNC_STATUS_ICONS[entry.syncStatus] as never ?? "sync-outline"}
+								size={s(11)}
+								color={syncColor}
+							/>
+							<Text style={[styles.statusText, { color: syncColor }]}>
+								{SYNC_STATUS_LABELS[entry.syncStatus] ?? entry.syncStatus}
+							</Text>
+						</View>
 					</View>
 				</Card>
 			</Animated.View>
@@ -129,11 +142,6 @@ function createStyles(colors: ThemeColors) {
 			justifyContent: "space-between",
 			alignItems: "center",
 			marginBottom: SPACING[8],
-		},
-		dateRow: {
-			flexDirection: "row",
-			alignItems: "center",
-			gap: s(4),
 		},
 		date: {
 			fontSize: FONT_SIZE[12],
@@ -160,9 +168,19 @@ function createStyles(colors: ThemeColors) {
 		},
 		statusRow: {
 			flexDirection: "row",
+			justifyContent: "space-between",
+			alignItems: "center",
+			marginTop: SPACING[8],
+		},
+		analysisBadge: {
+			flexDirection: "row",
 			alignItems: "center",
 			gap: s(4),
-			marginTop: SPACING[8],
+		},
+		syncBadge: {
+			flexDirection: "row",
+			alignItems: "center",
+			gap: s(4),
 		},
 		statusDot: {
 			width: s(6),
