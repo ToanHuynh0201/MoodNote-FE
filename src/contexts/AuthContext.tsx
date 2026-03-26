@@ -23,7 +23,7 @@ import {
 } from "@/utils/storage";
 import { AuthorizationStatus, getMessaging, getToken, requestPermission } from "@react-native-firebase/messaging";
 import { createContext, useCallback, useEffect, useState, type ReactNode } from "react";
-import { Platform } from "react-native";
+import { PermissionsAndroid, Platform } from "react-native";
 import { notificationService } from "@/services/notification.service";
 
 // ─── Internal state ────────────────────────────────────────────────────────────
@@ -56,6 +56,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	// FR-21: Register FCM device token after authentication
 	const registerFcmToken = useCallback(async (): Promise<void> => {
 		try {
+			// Android 13+ (API 33) requires explicit POST_NOTIFICATIONS permission
+			// before Firebase's requestPermission can get a token
+			if (Platform.OS === "android" && Platform.Version >= 33) {
+				const result = await PermissionsAndroid.request(
+					PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+				);
+				if (result !== PermissionsAndroid.RESULTS.GRANTED) return;
+			}
+
 			const authStatus = await requestPermission(getMessaging());
 			const isAuthorized =
 				authStatus === AuthorizationStatus.AUTHORIZED ||

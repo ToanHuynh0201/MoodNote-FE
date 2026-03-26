@@ -3,8 +3,10 @@ import { useEffect } from "react";
 
 import { ProtectedRoute } from "@/components/navigation";
 import { NetworkBanner, NotificationPopupProvider, useNotificationPopup } from "@/components/ui/feedback";
-import { getMessaging, onMessage } from "@react-native-firebase/messaging";
+import { getInitialNotification, getMessaging, onMessage, onNotificationOpenedApp } from "@react-native-firebase/messaging";
 import { useNotificationStore } from "@/store";
+import { ROUTES } from "@/constants";
+import { router } from "expo-router";
 import { View } from "react-native";
 
 // ─── Inner content (needs to be inside NotificationPopupProvider to use useNotificationPopup) ─────────
@@ -26,6 +28,23 @@ function AppContent() {
 		});
 		return unsubscribe;
 	}, [show, incrementUnreadCount]);
+
+	useEffect(() => {
+		// FR-21: Navigate to notifications screen when user taps a notification while app is in background
+		const unsubscribe = onNotificationOpenedApp(getMessaging(), () => {
+			router.push(ROUTES.NOTIFICATIONS as never);
+		});
+		return unsubscribe;
+	}, []);
+
+	useEffect(() => {
+		// FR-21: Navigate to notifications screen when app is opened from a quit state via notification tap
+		getInitialNotification(getMessaging()).then((remoteMessage) => {
+			if (remoteMessage) {
+				router.push(ROUTES.NOTIFICATIONS as never);
+			}
+		});
+	}, []);
 
 	return (
 		<View style={{ flex: 1 }}>
