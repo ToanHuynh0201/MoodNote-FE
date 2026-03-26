@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { BlurView } from "expo-blur";
-import { useCallback, useMemo, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AppState, Pressable, StyleSheet, View } from "react-native";
+import type { AppStateStatus } from "react-native";
 import Animated, {
 	useAnimatedStyle,
 	useSharedValue,
@@ -11,6 +12,8 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useThemeColors, useThemeContext } from "@/hooks";
+import { useNotificationStore } from "@/store";
+import { notificationService } from "@/services/notification.service";
 import type { ThemeColors } from "@/theme";
 import { RADIUS, SPACING } from "@/theme";
 import { s, vs } from "@/utils";
@@ -23,6 +26,29 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 	const { colorScheme } = useThemeContext();
 	const insets = useSafeAreaInsets();
 	const styles = useMemo(() => createStyles(colors, insets.bottom), [colors, insets.bottom]);
+
+	const { unreadCount, setUnreadCount } = useNotificationStore();
+	const appState = useRef(AppState.currentState);
+
+	const refreshUnreadCount = useCallback(() => {
+		notificationService.getUnreadCount().then((res) => {
+			if (res.success) setUnreadCount(res.data.count);
+		});
+	}, [setUnreadCount]);
+
+	useEffect(() => {
+		refreshUnreadCount();
+	}, [refreshUnreadCount]);
+
+	useEffect(() => {
+		const sub = AppState.addEventListener("change", (nextState: AppStateStatus) => {
+			if (appState.current !== "active" && nextState === "active") {
+				refreshUnreadCount();
+			}
+			appState.current = nextState;
+		});
+		return () => sub.remove();
+	}, [refreshUnreadCount]);
 
 	const [menuOpen, setMenuOpen] = useState(false);
 
@@ -82,6 +108,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 				onPress={onPress}
 				onLongPress={onLongPress}
 				colors={colors}
+				unreadCount={route.name === "profile" ? unreadCount : 0}
 			/>
 		);
 	}

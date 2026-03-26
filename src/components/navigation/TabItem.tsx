@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo } from "react";
-import { Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
 	Extrapolation,
 	interpolate,
@@ -11,7 +11,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import type { ThemeColors } from "@/theme";
-import { FONT_SIZE, LINE_HEIGHT, SPACING } from "@/theme";
+import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import { s } from "@/utils";
 import type { IoniconName } from "@/constants";
 import { TAB_ICONS } from "@/constants";
@@ -23,9 +23,10 @@ interface Props {
 	onPress: () => void;
 	onLongPress: () => void;
 	colors: ThemeColors;
+	unreadCount?: number;
 }
 
-export function TabItem({ label, routeName, isFocused, onPress, onLongPress, colors }: Props) {
+export function TabItem({ label, routeName, isFocused, onPress, onLongPress, colors, unreadCount = 0 }: Props) {
 	const iconConfig = TAB_ICONS[routeName] ?? { active: "ellipse", inactive: "ellipse-outline" };
 	const iconName: IoniconName = isFocused ? iconConfig.active : iconConfig.inactive;
 	const iconColor = isFocused ? colors.nav.activeIcon : colors.nav.inactiveIcon;
@@ -85,9 +86,18 @@ export function TabItem({ label, routeName, isFocused, onPress, onLongPress, col
 			accessibilityState={{ selected: isFocused }}
 			hitSlop={8}>
 			<Animated.View style={[itemStyles.inner, pressAnimStyle]}>
-				<Animated.View style={iconAnimStyle}>
-					<Ionicons name={iconName} size={s(22)} color={iconColor} />
-				</Animated.View>
+				<View style={itemStyles.iconWrapper}>
+					<Animated.View style={iconAnimStyle}>
+						<Ionicons name={iconName} size={s(22)} color={iconColor} />
+					</Animated.View>
+					{unreadCount > 0 && (
+						<View style={itemStyles.badge}>
+							<Text style={itemStyles.badgeText}>
+								{unreadCount > 99 ? "99+" : unreadCount}
+							</Text>
+						</View>
+					)}
+				</View>
 				<Animated.View style={[itemStyles.labelContainer, labelContainerStyle]}>
 					<Animated.Text style={[itemStyles.label, { color: labelColor }, labelAnimStyle]}>
 						{label}
@@ -108,6 +118,29 @@ function createItemStyles(colors: ThemeColors) {
 		},
 		inner: {
 			alignItems: "center",
+		},
+		iconWrapper: {
+			position: "relative",
+		},
+		badge: {
+			position: "absolute",
+			top: -s(4),
+			right: -s(6),
+			minWidth: s(16),
+			height: s(16),
+			borderRadius: RADIUS.full,
+			backgroundColor: colors.status.error,
+			alignItems: "center",
+			justifyContent: "center",
+			paddingHorizontal: s(3),
+			borderWidth: 1.5,
+			borderColor: colors.nav.background,
+		},
+		badgeText: {
+			fontSize: FONT_SIZE[11],
+			lineHeight: LINE_HEIGHT.tight,
+			color: colors.text.inverse,
+			fontWeight: "700",
 		},
 		labelContainer: {
 			overflow: "hidden",

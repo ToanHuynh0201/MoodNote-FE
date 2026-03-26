@@ -7,11 +7,12 @@ import { Divider } from "@/components/ui/display/Divider";
 import { Input } from "@/components/ui/inputs/Input";
 import { ROUTES } from "@/constants";
 import { useAuth, useForm, useThemeColors, useThemeContext } from "@/hooks";
+import { useNotificationStore } from "@/store";
 import { updateProfileSchema } from "@/schemas";
 import { userService } from "@/services";
 import { ApiError } from "@/utils/error";
 import type { ThemeColors } from "@/theme";
-import { FONT_SIZE, RADIUS, SPACING } from "@/theme";
+import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import { s } from "@/utils";
 import { router } from "expo-router";
 
@@ -19,6 +20,7 @@ import { router } from "expo-router";
 export default function ProfileScreen() {
 	const colors = useThemeColors();
 	const styles = useMemo(() => createStyles(colors), [colors]);
+	const unreadCount = useNotificationStore((s) => s.unreadCount);
 	const { user, logout, updateUser } = useAuth();
 	const { colorScheme, toggleTheme } = useThemeContext();
 	const [isEditing, setIsEditing] = useState(false);
@@ -138,7 +140,16 @@ export default function ProfileScreen() {
 							/>
 							<Text style={styles.menuLabel}>Thông báo</Text>
 						</View>
-						<Ionicons name="chevron-forward" size={s(16)} color={colors.text.muted} />
+						<View style={styles.menuRowRight}>
+							{unreadCount > 0 && (
+								<View style={styles.notifBadge}>
+									<Text style={styles.notifBadgeText}>
+										{unreadCount > 99 ? "99+" : unreadCount}
+									</Text>
+								</View>
+							)}
+							<Ionicons name="chevron-forward" size={s(16)} color={colors.text.muted} />
+						</View>
 					</Pressable>
 					<Divider />
 					<Pressable
@@ -233,9 +244,29 @@ function createStyles(colors: ThemeColors) {
 			alignItems: "center",
 			gap: SPACING[12],
 		},
+		menuRowRight: {
+			flexDirection: "row",
+			alignItems: "center",
+			gap: SPACING[8],
+		},
 		menuLabel: {
 			fontSize: FONT_SIZE[15],
 			color: colors.text.primary,
+		},
+		notifBadge: {
+			minWidth: s(20),
+			height: s(20),
+			borderRadius: RADIUS.full,
+			backgroundColor: colors.status.error,
+			alignItems: "center",
+			justifyContent: "center",
+			paddingHorizontal: s(5),
+		},
+		notifBadgeText: {
+			fontSize: FONT_SIZE[11],
+			lineHeight: LINE_HEIGHT.tight,
+			color: colors.text.inverse,
+			fontWeight: "700",
 		},
 	});
 }
