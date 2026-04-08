@@ -1,17 +1,27 @@
 // NFR-04: Network monitoring + sync orchestration
+// NFR-18: Auto-retry failed syncs (max 3 attempts)
 
 import {
+	getMaxRetryEntries,
 	getPendingEntries,
 	hardDeleteEntry,
+	incrementRetryCount,
 	markSynced,
 	markUpdateSynced,
+	resetAllRetryCount,
+	resetRetryCount,
 	upsertListFromServer,
 } from "@/db";
 import { entryService } from "@/services/entry.service";
+import type { SyncContextValue } from "@/types/contexts.types";
 import { ApiError, logError } from "@/utils/error";
 import NetInfo, { type NetInfoState } from "@react-native-community/netinfo";
 import { createContext, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import type { SyncContextValue } from "@/types/contexts.types";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const MAX_RETRY = 3; // NFR-18: max sync attempts per pending entry
+const PERIODIC_SYNC_MS = 1 * 60 * 1000; // sync every 1 min while online (NFR-04)
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -27,6 +37,7 @@ export function SyncProvider({ children }: Props) {
 	const [isOnline, setIsOnline] = useState(true);
 	const [isSyncing, setIsSyncing] = useState(false);
 	const [pendingCount, setPendingCount] = useState(0);
+	const [failedCount, setFailedCount] = useState(0);
 	const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
 
 	// Track previous online state to detect false→true transition
@@ -36,7 +47,17 @@ export function SyncProvider({ children }: Props) {
 	const refreshPendingCount = useCallback(async () => {
 		try {
 			const pending = await getPendingEntries();
-			setPendingCount(pending.length);
+			// Pending = entries not yet synced AND still within retry limit
+			setPendingCount(pending.filter((r) => r.retry_count < MAX_RETRY).length);
+		} catch {
+			// non-critical
+		}
+	}, []);
+
+	const refreshFailedCount = useCallback(async () => {
+		try {
+			const failed = await getMaxRetryEntries(MAX_RETRY);
+			setFailedCount(failed.length);
 		} catch {
 			// non-critical
 		}
@@ -51,14 +72,18 @@ export function SyncProvider({ children }: Props) {
 			const pending = await getPendingEntries();
 			console.log("[Sync] START - pending:", pending.length);
 
-			if (pending.length === 0) {
-				console.log("[Sync] OK - nothing to sync");
-			}
-
 			for (const row of pending) {
+				// NFR-18: skip entries that have hit the retry limit
+				if (row.retry_count >= MAX_RETRY) {
+					console.log("[Sync] SKIP (max retries=" + row.retry_count + ") local_id=" + row.local_id);
+					continue;
+				}
+
 				try {
 					if (row.sync_status === "pending_create") {
-						console.log("[Sync] UP CREATE local_id=" + row.local_id + " title=" + (row.title ?? "(no title)"));
+						console.log(
+							"[Sync] UP CREATE local_id=" + row.local_id + " title=" + (row.title ?? "(no title)"),
+						);
 						const contentDelta = JSON.parse(row.content) as Parameters<
 							typeof entryService.create
 						>[0]["content"];
@@ -71,17 +96,22 @@ export function SyncProvider({ children }: Props) {
 							inputMethod: row.input_method as "TEXT" | "VOICE",
 							tags,
 						});
-						if (!result.success) throw new ApiError(result.error, result.status ?? 500, result.code);
-						await markSynced(
-							row.local_id,
-							result.data.entry.id,
-							result.data.entry.analysisStatus,
+						if (!result.success)
+							throw new ApiError(result.error, result.status ?? 500, result.code);
+						await markSynced(row.local_id, result.data.entry.id, result.data.entry.analysisStatus);
+						await resetRetryCount(row.local_id);
+						console.log(
+							"[Sync] OK CREATE local_id=" + row.local_id + " -> server_id=" + result.data.entry.id,
 						);
-						console.log("[Sync] OK CREATE local_id=" + row.local_id + " -> server_id=" + result.data.entry.id);
 					} else if (row.sync_status === "pending_update") {
 						if (!row.server_id) {
 							// Never reached server — treat as pending_create
-							console.log("[Sync] UP UPDATE->CREATE local_id=" + row.local_id + " title=" + (row.title ?? "(no title)"));
+							console.log(
+								"[Sync] UP UPDATE->CREATE local_id=" +
+									row.local_id +
+									" title=" +
+									(row.title ?? "(no title)"),
+							);
 							const contentDelta = JSON.parse(row.content) as Parameters<
 								typeof entryService.create
 							>[0]["content"];
@@ -93,15 +123,29 @@ export function SyncProvider({ children }: Props) {
 								inputMethod: row.input_method as "TEXT" | "VOICE",
 								tags,
 							});
-							if (!result.success) throw new ApiError(result.error, result.status ?? 500, result.code);
+							if (!result.success)
+								throw new ApiError(result.error, result.status ?? 500, result.code);
 							await markSynced(
 								row.local_id,
 								result.data.entry.id,
 								result.data.entry.analysisStatus,
 							);
-							console.log("[Sync] OK UPDATE->CREATE local_id=" + row.local_id + " -> server_id=" + result.data.entry.id);
+							await resetRetryCount(row.local_id);
+							console.log(
+								"[Sync] OK UPDATE->CREATE local_id=" +
+									row.local_id +
+									" -> server_id=" +
+									result.data.entry.id,
+							);
 						} else {
-							console.log("[Sync] UP UPDATE local_id=" + row.local_id + " server_id=" + row.server_id + " title=" + (row.title ?? "(no title)"));
+							console.log(
+								"[Sync] UP UPDATE local_id=" +
+									row.local_id +
+									" server_id=" +
+									row.server_id +
+									" title=" +
+									(row.title ?? "(no title)"),
+							);
 							const contentDelta = JSON.parse(row.content) as Parameters<
 								typeof entryService.update
 							>[1]["content"];
@@ -111,8 +155,10 @@ export function SyncProvider({ children }: Props) {
 								content: contentDelta,
 								tags,
 							});
-							if (!result.success) throw new ApiError(result.error, result.status ?? 500, result.code);
+							if (!result.success)
+								throw new ApiError(result.error, result.status ?? 500, result.code);
 							await markUpdateSynced(row.local_id);
+							await resetRetryCount(row.local_id);
 							console.log("[Sync] OK UPDATE local_id=" + row.local_id);
 						}
 					} else if (row.sync_status === "pending_delete") {
@@ -129,7 +175,11 @@ export function SyncProvider({ children }: Props) {
 								if (deleteResult.status === 404) {
 									console.log("[Sync] DEL 404 on server - cleaning up locally");
 								} else {
-									throw new ApiError(deleteResult.error, deleteResult.status ?? 500, deleteResult.code);
+									throw new ApiError(
+										deleteResult.error,
+										deleteResult.status ?? 500,
+										deleteResult.code,
+									);
 								}
 							}
 							await hardDeleteEntry(row.local_id);
@@ -139,24 +189,22 @@ export function SyncProvider({ children }: Props) {
 				} catch (err) {
 					console.log("[Sync] ERR local_id=" + row.local_id + " status=" + row.sync_status, err);
 					logError(err, { context: "SyncContext.syncNow" });
-					// Continue to next item — retry on next sync cycle
+					await incrementRetryCount(row.local_id); // NFR-18: track failures
+					// Continue to next item — retry on next sync cycle (until MAX_RETRY)
 				}
 			}
 
-			// After sync, refresh list from server if we processed anything
-			if (pending.length > 0) {
-				console.log("[Sync] DOWN refreshing list from server...");
-				const listResult = await entryService.getList({ page: 1, limit: 100 });
-				if (listResult.success) {
-					await upsertListFromServer(listResult.data.entries);
-					console.log("[Sync] OK list refreshed - entries:", listResult.data.entries.length);
-				} else {
-					console.log("[Sync] WARN list refresh failed (non-critical)");
-				}
+			// Always refresh list from server — picks up entries added from other sessions
+			console.log("[Sync] DOWN refreshing list from server...");
+			const listResult = await entryService.getList({ page: 1, limit: 100 });
+			if (listResult.success) {
+				await upsertListFromServer(listResult.data.entries);
+				console.log("[Sync] OK list refreshed - entries:", listResult.data.entries.length);
+			} else {
+				console.log("[Sync] WARN list refresh failed (non-critical)");
 			}
 
 			setLastSyncedAt(new Date());
-			await refreshPendingCount();
 			console.log("[Sync] DONE");
 		} catch (err) {
 			console.log("[Sync] ERR top-level", err);
@@ -164,17 +212,29 @@ export function SyncProvider({ children }: Props) {
 		} finally {
 			isSyncingRef.current = false;
 			setIsSyncing(false);
+			await refreshPendingCount();
+			await refreshFailedCount();
 		}
-	}, [refreshPendingCount]);
+	}, [refreshPendingCount, refreshFailedCount]);
+
+	const retryFailed = useCallback(async () => {
+		await resetAllRetryCount(MAX_RETRY);
+		await refreshFailedCount();
+		await refreshPendingCount();
+		void syncNow();
+	}, [refreshFailedCount, refreshPendingCount, syncNow]);
 
 	// Network state subscription
 	useEffect(() => {
-		// Get initial state
+		// Get initial state and trigger an immediate sync if online
 		void NetInfo.fetch().then((state: NetInfoState) => {
 			const online = state.isConnected === true && state.isInternetReachable !== false;
 			console.log("[Network] initial state:", online ? "ONLINE" : "OFFLINE");
 			setIsOnline(online);
 			wasOnlineRef.current = online;
+			// Sync on startup — listener only fires on state *changes*, so we must
+			// trigger here to push pending entries and pull new server entries on open.
+			if (online) void syncNow();
 		});
 
 		const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
@@ -194,14 +254,35 @@ export function SyncProvider({ children }: Props) {
 		return () => unsubscribe();
 	}, [syncNow]);
 
-	// Load initial pending count
+	// Periodic sync every 5 minutes while online (NFR-04)
+	useEffect(() => {
+		const interval = setInterval(() => {
+			if (wasOnlineRef.current) {
+				console.log("[Sync] PERIODIC trigger");
+				void syncNow();
+			}
+		}, PERIODIC_SYNC_MS);
+		return () => clearInterval(interval);
+	}, [syncNow]);
+
+	// Load initial pending/failed counts
 	useEffect(() => {
 		void refreshPendingCount();
-	}, [refreshPendingCount]);
+		void refreshFailedCount();
+	}, [refreshPendingCount, refreshFailedCount]);
 
 	return (
 		<SyncContext.Provider
-			value={{ isOnline, isSyncing, pendingCount, lastSyncedAt, syncNow, refreshPendingCount }}>
+			value={{
+				isOnline,
+				isSyncing,
+				pendingCount,
+				failedCount,
+				lastSyncedAt,
+				syncNow,
+				retryFailed,
+				refreshPendingCount,
+			}}>
 			{children}
 		</SyncContext.Provider>
 	);

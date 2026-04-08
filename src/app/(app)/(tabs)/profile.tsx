@@ -1,20 +1,20 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useCallback, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar, Badge, Button, ToggleSwitch } from "@/components";
 import { Divider } from "@/components/ui/display/Divider";
 import { Input } from "@/components/ui/inputs/Input";
 import { ROUTES } from "@/constants";
 import { useAuth, useForm, useThemeColors, useThemeContext } from "@/hooks";
-import { useNotificationStore } from "@/store";
 import { updateProfileSchema } from "@/schemas";
 import { userService } from "@/services";
-import { ApiError } from "@/utils/error";
+import { useNotificationStore } from "@/store";
 import type { ThemeColors } from "@/theme";
 import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import { s } from "@/utils";
+import { ApiError } from "@/utils/error";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // FR-05: Profile / settings screen
 export default function ProfileScreen() {
@@ -59,8 +59,7 @@ export default function ProfileScreen() {
 				showsVerticalScrollIndicator={false}
 				keyboardShouldPersistTaps="handled">
 				{/* Avatar + Info */}
-				<View
-					style={styles.card}>
+				<View style={styles.card}>
 					<View style={styles.header}>
 						<Avatar name={user.name} size="lg" />
 						<Text style={styles.displayName}>{user.name}</Text>
@@ -68,7 +67,7 @@ export default function ProfileScreen() {
 						<View style={styles.emailRow}>
 							<Text style={styles.email}>{user.email}</Text>
 							<Badge
-								label={user.isEmailVerified ? "Verified" : "Unverified"}
+								label={user.isEmailVerified ? "Đã xác thực" : "Chưa xác thực"}
 								color={
 									user.isEmailVerified
 										? colors.status.successBackground
@@ -118,8 +117,8 @@ export default function ProfileScreen() {
 				{/* Theme toggle */}
 				<View style={styles.card}>
 					<ToggleSwitch
-						label="Dark Mode"
-						sublabel={isDark ? "Dark theme active" : "Light theme active"}
+						label="Chế độ tối"
+						sublabel={isDark ? "Giao diện tối đang bật" : "Giao diện sáng đang bật"}
 						value={isDark}
 						onValueChange={toggleTheme}
 					/>
@@ -133,11 +132,7 @@ export default function ProfileScreen() {
 						accessibilityLabel="Thông báo"
 						accessibilityRole="button">
 						<View style={styles.menuRowLeft}>
-							<Ionicons
-								name="notifications-outline"
-								size={s(20)}
-								color={colors.iconDefault}
-							/>
+							<Ionicons name="notifications-outline" size={s(20)} color={colors.iconDefault} />
 							<Text style={styles.menuLabel}>Thông báo</Text>
 						</View>
 						<View style={styles.menuRowRight}>
@@ -158,11 +153,7 @@ export default function ProfileScreen() {
 						accessibilityLabel="Cài đặt thông báo"
 						accessibilityRole="button">
 						<View style={styles.menuRowLeft}>
-							<Ionicons
-								name="settings-outline"
-								size={s(20)}
-								color={colors.iconDefault}
-							/>
+							<Ionicons name="settings-outline" size={s(20)} color={colors.iconDefault} />
 							<Text style={styles.menuLabel}>Cài đặt thông báo</Text>
 						</View>
 						<Ionicons name="chevron-forward" size={s(16)} color={colors.text.muted} />
@@ -171,7 +162,7 @@ export default function ProfileScreen() {
 
 				{/* Logout */}
 				<View style={styles.card}>
-					<Button title="Log Out" variant="danger" fullWidth onPress={handleLogout} />
+					<Button title="Đăng xuất" variant="danger" fullWidth onPress={handleLogout} />
 				</View>
 			</ScrollView>
 		</SafeAreaView>

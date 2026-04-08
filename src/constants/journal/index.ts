@@ -38,7 +38,7 @@ export const EMOTION_TYPE_LABELS: Record<string, string> = {
 	Sadness: "Buồn bã",
 	Anger: "Tức giận",
 	Fear: "Sợ hãi",
-	Disgust: "Ghê tởm",
+	Disgust: "Chán ghét",
 	Surprise: "Ngạc nhiên",
 	Other: "Khác",
 };

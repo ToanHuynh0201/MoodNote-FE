@@ -46,7 +46,9 @@ export interface SyncContextValue {
 	isOnline: boolean;
 	isSyncing: boolean;
 	pendingCount: number;
+	failedCount: number; // entries that hit MAX_RETRY and need user attention
 	lastSyncedAt: Date | null;
 	syncNow: () => Promise<void>;
+	retryFailed: () => Promise<void>; // reset retry counters + re-trigger sync
 	refreshPendingCount: () => Promise<void>;
 }

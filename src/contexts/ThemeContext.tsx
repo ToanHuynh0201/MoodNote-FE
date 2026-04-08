@@ -31,7 +31,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 	useEffect(() => {
 		getStorageItem<ColorScheme>(THEME_STORAGE_KEY).then((saved) => {
 			if (saved === "light" || saved === "dark") {
-				setColorScheme("light");
+				setColorScheme(saved);
 			}
 		});
 	}, []);
