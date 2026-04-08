@@ -6,3 +6,5 @@ export type * from "./contexts.types";
 export type * from "./form.types";
 export type * from "./components";
 export type * from "./notification.types";
+export type * from "./stats.types";
+export type * from "./music.types";

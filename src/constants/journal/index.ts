@@ -1,6 +1,6 @@
 import { actions } from "react-native-pell-rich-editor";
 
-import type { AnalysisStatus } from "@/types";
+import type { AnalysisStatus, EmotionType } from "@/types";
 
 export const TOOLBAR_ACTIONS = [
 	actions.heading1,
@@ -60,6 +60,17 @@ export const INTENSITY_LABELS: { max: number; label: string }[] = [
 	{ max: 80, label: "Mạnh" },
 	{ max: 100, label: "Rất mạnh" },
 ];
+
+// Emotion type → emoji mapping (used in statistics and home screens)
+export const EMOTION_EMOJI: Record<EmotionType, string> = {
+	Enjoyment: "😊",
+	Sadness: "😢",
+	Anger: "😠",
+	Fear: "😨",
+	Disgust: "🤢",
+	Surprise: "😲",
+	Other: "😐",
+};
 
 export const ANALYSIS_POLL_INTERVAL_MS = 3000;
 

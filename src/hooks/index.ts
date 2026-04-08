@@ -9,6 +9,7 @@ export { useEntry } from "./useEntry";
 export { useSync } from "./useSync";
 export { useNotifications } from "./useNotifications";
 export { useNotificationSettings } from "./useNotificationSettings";
+export { useHomeData } from "./useHomeData";
 
 // Re-export hook-related types from @/types for convenience
 export type { UseFormOptions, UseFormResult } from "@/types/form.types";
