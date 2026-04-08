@@ -14,4 +14,8 @@ export {
 	updateAnalysisStatus,
 	getEntryServerId,
 	markContentFetched,
+	incrementRetryCount,
+	resetRetryCount,
+	getMaxRetryEntries,
+	resetAllRetryCount,
 } from "./entryRepository";

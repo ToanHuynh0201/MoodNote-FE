@@ -375,6 +375,42 @@ export async function markContentFetched(localId: string): Promise<void> {
 	);
 }
 
+/** Increment retry_count for a pending entry (called on sync failure). */
+export async function incrementRetryCount(localId: string): Promise<void> {
+	const db = getDb();
+	await db.runAsync(
+		`UPDATE entries SET retry_count = retry_count + 1 WHERE local_id = ?`,
+		localId,
+	);
+}
+
+/** Reset retry_count to 0 for a specific entry (called on sync success). */
+export async function resetRetryCount(localId: string): Promise<void> {
+	const db = getDb();
+	await db.runAsync(
+		`UPDATE entries SET retry_count = 0 WHERE local_id = ?`,
+		localId,
+	);
+}
+
+/** Return entries that have exceeded the retry limit (retry_count >= maxRetry). */
+export async function getMaxRetryEntries(maxRetry: number): Promise<LocalEntryRow[]> {
+	const db = getDb();
+	return db.getAllAsync<LocalEntryRow>(
+		`SELECT * FROM entries WHERE sync_status != 'synced' AND retry_count >= ?`,
+		maxRetry,
+	);
+}
+
+/** Reset retry_count for all max-retry entries so they can be retried again. */
+export async function resetAllRetryCount(maxRetry: number): Promise<void> {
+	const db = getDb();
+	await db.runAsync(
+		`UPDATE entries SET retry_count = 0 WHERE sync_status != 'synced' AND retry_count >= ?`,
+		maxRetry,
+	);
+}
+
 /** Returns server_id for a local entry (null if never synced). */
 export async function getEntryServerId(
 	localId: string,

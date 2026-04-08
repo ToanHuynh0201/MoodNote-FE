@@ -21,6 +21,7 @@ export interface LocalEntryRow {
 	emotion_analysis: string | null; // JSON string → parse to EmotionAnalysis, or null
 	sync_status: SyncStatus;
 	content_fetched: number; // 0 = stub (list sync), 1 = full content
+	retry_count: number; // NFR-18: incremented on each failed sync attempt, capped at MAX_RETRY
 	created_at: string;
 	updated_at: string;
 }

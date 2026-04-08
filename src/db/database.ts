@@ -54,6 +54,15 @@ export async function initDatabase(): Promise<void> {
 	} catch {
 		// Column already exists — safe to ignore
 	}
+
+	// Migration: add retry_count column if not yet present (NFR-18: max 3 retries)
+	try {
+		await db.execAsync(
+			`ALTER TABLE entries ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0;`,
+		);
+	} catch {
+		// Column already exists — safe to ignore
+	}
 }
 
 export function getDb(): SQLite.SQLiteDatabase {

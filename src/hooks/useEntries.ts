@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSync } from "./useSync";
 
 export function useEntries(): UseEntriesResult {
-	const { isOnline, isSyncing } = useSync();
+	const { isOnline, lastSyncedAt } = useSync();
 
 	// Full sorted list from local DB
 	const [allEntries, setAllEntries] = useState<EntryListItem[]>([]);
@@ -29,11 +29,6 @@ export function useEntries(): UseEntriesResult {
 	useEffect(() => {
 		isOnlineRef.current = isOnline;
 	}, [isOnline]);
-
-	const isSyncingRef = useRef(isSyncing);
-	useEffect(() => {
-		isSyncingRef.current = isSyncing;
-	}, [isSyncing]);
 
 	/** Reload allEntries from local DB */
 	const loadFromDb = useCallback(async () => {
@@ -59,18 +54,15 @@ export function useEntries(): UseEntriesResult {
 		}
 	}, []);
 
-	// Initial load
+	// Initial load — show cached data immediately.
+	// Server pull is handled by SyncContext.syncNow (runs on startup + periodic).
+	// We reload via the lastSyncedAt effect once SyncContext reports completion.
 	useEffect(() => {
 		const load = async () => {
 			setIsLoading(true);
 			setError(null);
 			try {
 				await loadFromDb();
-				// Skip syncFromServer if SyncContext is already writing to DB — avoids concurrent SQLite writes
-				if (isOnlineRef.current && !isSyncingRef.current) {
-					await syncFromServer();
-					await loadFromDb();
-				}
 			} catch (err) {
 				setError(err instanceof Error ? err.message : "An unexpected error occurred.");
 			} finally {
@@ -78,17 +70,16 @@ export function useEntries(): UseEntriesResult {
 			}
 		};
 		void load();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [loadFromDb]);
 
-	// Reload from DB when SyncContext finishes a sync cycle
-	const prevIsSyncingRef = useRef(false);
+	// Reload from DB whenever SyncContext completes a sync cycle.
+	// lastSyncedAt is updated by SyncContext after every syncNow() run,
+	// so this fires reliably regardless of when the component mounted.
 	useEffect(() => {
-		if (prevIsSyncingRef.current && !isSyncing) {
+		if (lastSyncedAt !== null) {
 			void loadFromDb();
 		}
-		prevIsSyncingRef.current = isSyncing;
-	}, [isSyncing, loadFromDb]);
+	}, [lastSyncedAt, loadFromDb]);
 
 	const refresh = useCallback(async () => {
 		setIsRefreshing(true);
