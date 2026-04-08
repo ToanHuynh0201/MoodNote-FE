@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { EMOTION_EMOJI } from "@/constants";
 import { useThemeColors } from "@/hooks";
 import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import type { ThemeColors } from "@/theme";
@@ -19,6 +20,9 @@ export function RecentEntryItem({ entry, onPress }: Props) {
 	const title = entry.title && entry.title.length > 0
 		? entry.title
 		: `Nhật ký ngày ${formatShortDate(entry.entryDate)}`;
+
+	const emotionEmoji =
+		entry.emotionAnalysis != null ? EMOTION_EMOJI[entry.emotionAnalysis.primaryEmotion] : null;
 
 	const handlePress = useCallback(() => {
 		onPress();
@@ -39,6 +43,9 @@ export function RecentEntryItem({ entry, onPress }: Props) {
 				</Text>
 			</View>
 			<View style={styles.meta}>
+				{emotionEmoji != null && (
+					<Text style={styles.emotion}>{emotionEmoji}</Text>
+				)}
 				<View style={styles.timeContainer}>
 					<Text style={styles.time}>{formatTime(entry.createdAt)}</Text>
 					<Text style={styles.date}>{formatShortDate(entry.entryDate)}</Text>
@@ -77,6 +84,9 @@ function createStyles(colors: ThemeColors) {
 		meta: {
 			alignItems: "flex-end",
 			gap: vs(4),
+		},
+		emotion: {
+			fontSize: s(18),
 		},
 		timeContainer: {
 			alignItems: "flex-end",

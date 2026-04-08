@@ -65,6 +65,12 @@ export interface Entry {
 	contentFetched?: boolean;
 }
 
+/** Partial emotion analysis returned inline with list items */
+export interface EntryListEmotionAnalysis {
+	primaryEmotion: EmotionType;
+	sentimentScore: number;
+}
+
 /** List item — returned by GET /entries (preview instead of full content) */
 export interface EntryListItem {
 	id: string;
@@ -76,6 +82,8 @@ export interface EntryListItem {
 	wordCount: number;
 	isPrivate: boolean;
 	analysisStatus: AnalysisStatus;
+	/** Present when analysisStatus === "COMPLETED", null otherwise */
+	emotionAnalysis: EntryListEmotionAnalysis | null;
 	createdAt: string;
 	updatedAt: string;
 	// NFR-04: offline fields

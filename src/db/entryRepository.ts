@@ -41,6 +41,15 @@ function rowToListItem(row: LocalEntryRow): EntryListItem {
 		wordCount: row.word_count,
 		isPrivate: row.is_private === 1,
 		analysisStatus: row.analysis_status as Entry["analysisStatus"],
+		emotionAnalysis: (() => {
+			if (!row.emotion_analysis) return null;
+			try {
+				const parsed = JSON.parse(row.emotion_analysis) as EmotionAnalysis;
+				return { primaryEmotion: parsed.primaryEmotion, sentimentScore: parsed.sentimentScore };
+			} catch {
+				return null;
+			}
+		})(),
 		createdAt: row.created_at,
 		updatedAt: row.updated_at,
 		isOffline,
