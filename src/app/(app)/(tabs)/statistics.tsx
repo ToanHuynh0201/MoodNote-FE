@@ -10,12 +10,12 @@ import {
 	View,
 	useWindowDimensions,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
+import { ScreenWrapper } from "@/components";
 import { MonthlyCalendar, SentimentLineChart, WeeklyOverview } from "@/components/statistics";
 import { useStatistics, useThemeColors } from "@/hooks";
-import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import type { ThemeColors } from "@/theme";
+import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import { s, vs } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -47,7 +47,7 @@ export default function StatisticsScreen() {
 	);
 
 	return (
-		<SafeAreaView style={styles.safeArea} edges={["top"]}>
+		<ScreenWrapper padded={false} style={styles.container}>
 			<ScrollView
 				style={styles.scroll}
 				contentContainerStyle={styles.content}
@@ -60,9 +60,7 @@ export default function StatisticsScreen() {
 					<View style={styles.weeklyHeader}>
 						<View>
 							<Text style={styles.sectionTitle}>Cảm xúc theo tuần</Text>
-							{weeklyData != null && (
-								<Text style={styles.weekLabel}>{weeklyData.weekLabel}</Text>
-							)}
+							{weeklyData != null && <Text style={styles.weekLabel}>{weeklyData.weekLabel}</Text>}
 						</View>
 						<View style={styles.weekNav}>
 							<Pressable
@@ -81,11 +79,7 @@ export default function StatisticsScreen() {
 								<Ionicons
 									name="chevron-forward"
 									size={s(20)}
-									color={
-										isNextWeekDisabled
-											? colors.interactive.disabled
-											: colors.brand.primary
-									}
+									color={isNextWeekDisabled ? colors.interactive.disabled : colors.brand.primary}
 								/>
 							</Pressable>
 						</View>
@@ -97,13 +91,9 @@ export default function StatisticsScreen() {
 						</View>
 					) : weeklyData != null ? (
 						<>
-							{/* Line chart */}
+							{/* Line chart — no card background, floats on gradient */}
 							<View style={styles.chartContainer}>
-								<SentimentLineChart
-									days={weeklyData.days}
-									width={chartWidth}
-									height={vs(180)}
-								/>
+								<SentimentLineChart days={weeklyData.days} width={chartWidth} height={vs(180)} />
 							</View>
 
 							{/* 7-day overview */}
@@ -138,18 +128,17 @@ export default function StatisticsScreen() {
 					)}
 				</View>
 			</ScrollView>
-		</SafeAreaView>
+		</ScreenWrapper>
 	);
 }
 
 function createStyles(colors: ThemeColors) {
 	return StyleSheet.create({
-		safeArea: {
-			flex: 1,
-			backgroundColor: colors.background.primary,
-		},
 		scroll: {
 			flex: 1,
+		},
+		container: {
+			paddingBottom: SPACING[48],
 		},
 		content: {
 			paddingHorizontal: SPACING[16],
@@ -188,10 +177,7 @@ function createStyles(colors: ThemeColors) {
 			gap: s(4),
 		},
 		chartContainer: {
-			backgroundColor: colors.background.card,
-			borderRadius: RADIUS.lg,
 			paddingVertical: SPACING[16],
-			paddingTop: vs(32),
 			marginBottom: SPACING[12],
 			overflow: "visible",
 		},

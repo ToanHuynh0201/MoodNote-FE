@@ -26,9 +26,13 @@ export function EmotionIcon({ emotion, size = 36 }: Props) {
 	const colors = useThemeColors();
 	const styles = useMemo(() => createStyles(colors, size), [colors, size]);
 
-	const emoji = emotion != null ? EMOTION_EMOJI[emotion] : "⭕";
-	const borderColor =
-		emotion != null ? colors.mood[EMOTION_TO_MOOD_KEY[emotion]] : colors.border.subtle;
+	if (emotion == null) {
+		// Days without an entry: subtle empty circle, no emoji
+		return <View style={styles.emptyCircle} />;
+	}
+
+	const emoji = EMOTION_EMOJI[emotion];
+	const borderColor = colors.mood[EMOTION_TO_MOOD_KEY[emotion]];
 
 	return (
 		<View style={[styles.circle, { borderColor }]}>
@@ -38,18 +42,30 @@ export function EmotionIcon({ emotion, size = 36 }: Props) {
 }
 
 function createStyles(colors: ThemeColors, size: number) {
+	const circleSize = s(size);
+	// Scale border width with size — thinner for small calendar icons
+	const borderWidth = size >= 30 ? 2 : 1.5;
 	return StyleSheet.create({
 		circle: {
-			width: s(size),
-			height: s(size),
-			borderRadius: s(size) / 2,
-			borderWidth: 2,
+			width: circleSize,
+			height: circleSize,
+			borderRadius: circleSize / 2,
+			borderWidth,
 			backgroundColor: colors.background.card,
 			alignItems: "center",
 			justifyContent: "center",
 		},
+		emptyCircle: {
+			width: circleSize,
+			height: circleSize,
+			borderRadius: circleSize / 2,
+			borderWidth,
+			borderColor: colors.border.subtle,
+			// transparent background — blends with parent surface
+		},
 		emoji: {
-			fontSize: s(size * 0.5),
+			// 0.62 ratio fills the circle well at all sizes
+			fontSize: s(size * 0.62),
 		},
 	});
 }

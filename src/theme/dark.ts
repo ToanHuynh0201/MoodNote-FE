@@ -12,6 +12,9 @@ export const DARK_THEME: ThemeColors = {
 		card: PALETTE.purple[700],
 		elevated: PALETTE.purple[600],
 		overlay: PALETTE.overlay.dark,
+		gradientStart: PALETTE.purple[800],
+		gradientEnd: PALETTE.purple[900],
+		glassCard: PALETTE.glass.cardDark,
 	},
 
 	text: {

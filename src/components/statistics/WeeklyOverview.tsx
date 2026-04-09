@@ -33,7 +33,7 @@ function createStyles(colors: ThemeColors) {
 		container: {
 			flexDirection: "row",
 			justifyContent: "space-between",
-			backgroundColor: colors.background.card,
+			backgroundColor: colors.background.glassCard,
 			borderRadius: RADIUS.lg,
 			paddingVertical: SPACING[12],
 			paddingHorizontal: SPACING[8],

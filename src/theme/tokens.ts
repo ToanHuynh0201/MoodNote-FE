@@ -23,6 +23,12 @@ export interface ThemeColors {
 		elevated: string;
 		/** Scrim / backdrop overlay */
 		overlay: string;
+		/** Statistics screen gradient — top color */
+		gradientStart: string;
+		/** Statistics screen gradient — bottom color */
+		gradientEnd: string;
+		/** Semi-transparent glass card — floats on gradient backgrounds */
+		glassCard: string;
 	};
 
 	text: {

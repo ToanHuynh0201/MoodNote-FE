@@ -10,6 +10,7 @@
 export const PALETTE = {
 	// ── Brand purples (Figma-derived) ────────────────────────────────────────
 	purple: {
+		50: "#F5F0FF",  // lightest lavender tint — statistics gradient start
 		100: "#EDE9FE", // brand tint backgrounds
 		200: "#C4A8FF", // muted brand
 		300: "#9B59F5", // secondary accent
@@ -71,6 +72,8 @@ export const PALETTE = {
 	glass: {
 		dark: "rgba(21, 10, 46, 0.65)",    // purple[800] at 65% opacity — dark glass
 		light: "rgba(255, 255, 255, 0.88)", // white at 88% opacity — white glass
+		cardDark: "rgba(26, 11, 50, 0.80)", // purple[700] at 80% — glass card dark
+		cardLight: "rgba(255, 255, 255, 0.65)", // white at 65% — glass card light
 	},
 
 	// ── Status Backgrounds ─────────────────────────────────────────
