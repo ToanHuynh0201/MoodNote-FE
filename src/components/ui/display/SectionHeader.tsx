@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useThemeColors } from "@/hooks";
-import { FONT_SIZE, SPACING } from "@/theme";
+import { FONT_SIZE, RADIUS, SPACING } from "@/theme";
 import type { ThemeColors } from "@/theme";
 import type { SectionHeaderProps } from "@/types";
 
@@ -17,6 +17,7 @@ export function SectionHeader({ title, action }: SectionHeaderProps) {
 				<Pressable
 					onPress={action.onPress}
 					hitSlop={8}
+					style={styles.actionBtn}
 					accessibilityRole="button"
 					accessibilityLabel={action.label}>
 					<Text style={styles.action}>{action.label}</Text>
@@ -39,9 +40,16 @@ function createStyles(colors: ThemeColors) {
 			fontWeight: "600",
 			color: colors.text.primary,
 		},
+		actionBtn: {
+			borderWidth: 1,
+			borderColor: colors.border.default,
+			borderRadius: RADIUS.full,
+			paddingHorizontal: SPACING[12],
+			paddingVertical: SPACING[4],
+		},
 		action: {
-			fontSize: FONT_SIZE[14],
-			color: colors.text.link,
+			fontSize: FONT_SIZE[12],
+			color: colors.text.secondary,
 		},
 	});
 }

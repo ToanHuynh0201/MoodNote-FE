@@ -15,8 +15,8 @@ import { PlaylistTrackItem, RecentEntryItem, StreakCard } from "@/components/hom
 import { SectionHeader } from "@/components/ui";
 import { ROUTES } from "@/constants";
 import { useHomeData, useThemeColors } from "@/hooks";
-import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import type { ThemeColors } from "@/theme";
+import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import { s, vs } from "@/utils";
 import { router } from "expo-router";
 
@@ -76,9 +76,7 @@ export default function HomeScreen() {
 						<Text style={styles.avatarEmoji}>🐰</Text>
 					</View>
 					<View style={styles.greetingText}>
-						<Text style={styles.greeting}>
-							Hi, {username.length > 0 ? username : "bạn"}!
-						</Text>
+						<Text style={styles.greeting}>Hi, {username.length > 0 ? username : "bạn"}!</Text>
 						<Text style={styles.greetingSub}>Ngày hôm nay của bạn có ổn không?</Text>
 					</View>
 				</View>
@@ -86,22 +84,20 @@ export default function HomeScreen() {
 				{/* Streak widgets */}
 				{streaks != null && (
 					<View style={styles.streakRow}>
+						<StreakCard iconType="smile" count={streaks.smileStreak} label="Cười mỗi ngày" />
 						<StreakCard
-							icon="😊"
-							count={streaks.smileStreak}
-							label="Cười mỗi ngày"
-						/>
-						<StreakCard
-							icon="🔥"
+							iconType="fire"
 							count={streaks.writingStreak}
-							label="Giữ chuỗi bạn nhé"
+							label="Giữ chuỗi bạn nha"
 							isHighlighted
+							iconBgColor={colors.brand.primary}
 						/>
-						{streaks.sadStreak > 0 && (
+						{streaks.sadStreak >= 0 && (
 							<StreakCard
-								icon="😢"
+								iconType="cry"
 								count={streaks.sadStreak}
 								label="Buồn rồi, qua nhanh thôi"
+								iconBgColor={colors.mood.sadness}
 							/>
 						)}
 					</View>
@@ -111,7 +107,7 @@ export default function HomeScreen() {
 				<View style={styles.section}>
 					<SectionHeader
 						title="Nhật ký gần đây"
-						action={{ label: "xem thêm", onPress: handleViewAllEntries }}
+						action={{ label: "Xem thêm", onPress: handleViewAllEntries }}
 					/>
 					{recentEntries.length === 0 ? (
 						<View style={styles.emptyBox}>
@@ -198,6 +194,7 @@ function createStyles(colors: ThemeColors) {
 		greeting: {
 			fontSize: FONT_SIZE[18],
 			fontWeight: "700",
+			fontStyle: "italic",
 			color: colors.brand.primary,
 			lineHeight: LINE_HEIGHT.relaxed,
 		},
@@ -208,6 +205,8 @@ function createStyles(colors: ThemeColors) {
 		},
 		streakRow: {
 			flexDirection: "row",
+			alignItems: "flex-end",
+			paddingTop: s(28),
 			gap: s(8),
 			marginBottom: SPACING[24],
 		},
