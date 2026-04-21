@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo } from "react";
 import {
-	ActivityIndicator,
 	Pressable,
 	ScrollView,
 	StyleSheet,
@@ -12,7 +11,7 @@ import {
 } from "react-native";
 
 import { ScreenWrapper } from "@/components";
-import { MonthlyCalendar, SentimentLineChart, WeeklyOverview } from "@/components/statistics";
+import { CalendarSkeleton, MonthlyCalendar, SentimentLineChart, WeeklyOverview, WeeklySectionSkeleton } from "@/components/statistics";
 import { useStatistics, useThemeColors } from "@/hooks";
 import type { ThemeColors } from "@/theme";
 import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
@@ -86,9 +85,7 @@ export default function StatisticsScreen() {
 					</View>
 
 					{isLoadingWeekly ? (
-						<View style={styles.loadingBox}>
-							<ActivityIndicator color={colors.brand.primary} />
-						</View>
+						<WeeklySectionSkeleton />
 					) : weeklyData != null ? (
 						<>
 							{/* Line chart — no card background, floats on gradient */}
@@ -112,9 +109,7 @@ export default function StatisticsScreen() {
 					<Text style={styles.sectionTitle}>Cảm xúc theo tháng</Text>
 
 					{isLoadingCalendar ? (
-						<View style={styles.loadingBox}>
-							<ActivityIndicator color={colors.brand.primary} />
-						</View>
+						<CalendarSkeleton />
 					) : calendarData != null ? (
 						<View style={styles.calendarContainer}>
 							<MonthlyCalendar data={calendarData} onChangeMonth={handleChangeMonth} />
@@ -191,11 +186,6 @@ function createStyles(colors: ThemeColors) {
 			backgroundColor: colors.background.card,
 			borderRadius: RADIUS.lg,
 			padding: SPACING[16],
-		},
-		loadingBox: {
-			height: vs(120),
-			justifyContent: "center",
-			alignItems: "center",
 		},
 		emptyBox: {
 			backgroundColor: colors.background.card,

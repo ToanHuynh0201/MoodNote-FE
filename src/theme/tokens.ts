@@ -29,6 +29,10 @@ export interface ThemeColors {
 		gradientEnd: string;
 		/** Semi-transparent glass card — floats on gradient backgrounds */
 		glassCard: string;
+		/** Skeleton loading placeholder base color */
+		skeleton: string;
+		/** Skeleton shimmer highlight color — sweeps across skeleton base */
+		skeletonHighlight: string;
 	};
 
 	text: {

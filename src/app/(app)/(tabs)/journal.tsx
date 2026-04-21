@@ -15,7 +15,7 @@ import Animated, {
 	type SharedValue,
 } from "react-native-reanimated";
 
-import { EntryCard } from "@/components/journal";
+import { EntryCard, JournalListSkeleton } from "@/components/journal";
 import { ScreenWrapper } from "@/components/layout/ScreenWrapper";
 import { EmptyState } from "@/components/ui/feedback/EmptyState";
 import { JournalIllustration } from "@/components/ui/illustrations/JournalIllustration";
@@ -181,7 +181,7 @@ export default function JournalScreen() {
 					data={entries}
 					keyExtractor={(item) => item.id}
 					renderItem={renderItem}
-					ListEmptyComponent={isLoading ? null : ListEmpty}
+					ListEmptyComponent={isLoading ? JournalListSkeleton : ListEmpty}
 					onRefresh={refresh}
 					refreshing={isRefreshing}
 					onEndReached={loadMore}

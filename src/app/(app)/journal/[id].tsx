@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-	ActivityIndicator,
 	Alert,
 	KeyboardAvoidingView,
 	Platform,
@@ -25,7 +24,7 @@ import Animated, {
 
 import { Badge } from "@/components/ui/display/Badge";
 import { Button } from "@/components/ui/buttons/Button";
-import { EmotionAnalysisCard, RichTextEditor } from "@/components/journal";
+import { EmotionAnalysisCard, EntryDetailSkeleton, RichTextEditor, SaveStatusBanner } from "@/components/journal";
 import type { RichTextEditorRef } from "@/components/journal";
 import { ScreenWrapper } from "@/components/layout/ScreenWrapper";
 import { ANALYSIS_STATUS_LABELS } from "@/constants/journal";
@@ -184,44 +183,10 @@ export default function EntryDetailScreen() {
 		setCurrentEntry((prev) => (prev ? { ...prev, analysisStatus: "PROCESSING" } : prev));
 	}, [entry?.id]);
 
-	// ── Save status indicator ─────────────────────────────────────────────────
-
-	const SaveIndicator = useMemo(() => {
-		if (saveStatus === "saving") {
-			return (
-				<View style={styles.saveIndicator}>
-					<ActivityIndicator size="small" color={colors.text.muted} />
-					<Text style={styles.saveText}>Đang lưu...</Text>
-				</View>
-			);
-		}
-		if (saveStatus === "saved") {
-			return (
-				<View style={styles.saveIndicator}>
-					<Ionicons name="checkmark-circle" size={s(16)} color={colors.status.success} />
-					<Text style={[styles.saveText, { color: colors.status.success }]}>Đã lưu</Text>
-				</View>
-			);
-		}
-		if (saveStatus === "error") {
-			return (
-				<View style={styles.saveIndicator}>
-					<Ionicons name="alert-circle" size={s(16)} color={colors.status.error} />
-					<Text style={[styles.saveText, { color: colors.status.error }]}>Lỗi lưu</Text>
-				</View>
-			);
-		}
-		return null;
-	}, [saveStatus, colors, styles]);
-
 	// ── Loading / error states ────────────────────────────────────────────────
 
 	if (isLoading) {
-		return (
-			<ScreenWrapper padded={false} style={styles.centered}>
-				<ActivityIndicator size="large" color={colors.brand.primary} />
-			</ScreenWrapper>
-		);
+		return <EntryDetailSkeleton />;
 	}
 
 	if (error || !currentEntry) {
@@ -253,7 +218,7 @@ export default function EntryDetailScreen() {
 					accessibilityLabel="Quay lại">
 					<Ionicons name="chevron-back" size={s(24)} color={colors.text.primary} />
 				</Pressable>
-				{SaveIndicator}
+				<SaveStatusBanner status={saveStatus} />
 				<Pressable
 					onPress={handleDelete}
 					hitSlop={8}
@@ -423,16 +388,6 @@ function createStyles(colors: ThemeColors) {
 			paddingVertical: SPACING[12],
 			borderBottomWidth: 1,
 			borderBottomColor: colors.border.subtle,
-		},
-		saveIndicator: {
-			flexDirection: "row",
-			alignItems: "center",
-			gap: s(4),
-		},
-		saveText: {
-			fontSize: FONT_SIZE[12],
-			color: colors.text.muted,
-			lineHeight: LINE_HEIGHT.tight,
 		},
 		scrollContent: {
 			paddingHorizontal: SPACING[20],

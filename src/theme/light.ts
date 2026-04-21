@@ -16,6 +16,8 @@ export const LIGHT_THEME: ThemeColors = {
 		gradientStart: PALETTE.purple[50],
 		gradientEnd: PALETTE.purple[100],
 		glassCard: PALETTE.glass.cardLight,
+		skeleton: PALETTE.neutral[200],
+		skeletonHighlight: PALETTE.neutral[50],
 	},
 
 	text: {

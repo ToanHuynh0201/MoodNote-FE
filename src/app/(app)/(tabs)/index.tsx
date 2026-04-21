@@ -1,17 +1,10 @@
 // FR-01, FR-06: Home screen — greeting, streak stats, recent entries, recent playlist
 
 import { useCallback, useMemo } from "react";
-import {
-	ActivityIndicator,
-	RefreshControl,
-	ScrollView,
-	StyleSheet,
-	Text,
-	View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { PlaylistTrackItem, RecentEntryItem, StreakCard } from "@/components/home";
+import { ScreenWrapper } from "@/components";
+import { HomeSkeleton, PlaylistTrackItem, RecentEntryItem, StreakCard } from "@/components/home";
 import { SectionHeader } from "@/components/ui";
 import { ROUTES } from "@/constants";
 import { useHomeData, useThemeColors } from "@/hooks";
@@ -36,11 +29,7 @@ export default function HomeScreen() {
 	}, [data]);
 
 	if (isLoading) {
-		return (
-			<SafeAreaView style={styles.loadingContainer}>
-				<ActivityIndicator size="large" color={colors.brand.primary} />
-			</SafeAreaView>
-		);
+		return <HomeSkeleton />;
 	}
 
 	const { username, streaks, recentEntries, recentPlaylist } = data ?? {
@@ -53,7 +42,7 @@ export default function HomeScreen() {
 	const tracks = recentPlaylist?.tracks ?? [];
 
 	return (
-		<SafeAreaView style={styles.safeArea} edges={["top"]}>
+		<ScreenWrapper padded={false}>
 			<ScrollView
 				style={styles.scroll}
 				contentContainerStyle={styles.content}
@@ -137,7 +126,7 @@ export default function HomeScreen() {
 					</View>
 				)}
 			</ScrollView>
-		</SafeAreaView>
+		</ScreenWrapper>
 	);
 }
 
@@ -145,12 +134,6 @@ function createStyles(colors: ThemeColors) {
 	return StyleSheet.create({
 		safeArea: {
 			flex: 1,
-			backgroundColor: colors.background.primary,
-		},
-		loadingContainer: {
-			flex: 1,
-			justifyContent: "center",
-			alignItems: "center",
 			backgroundColor: colors.background.primary,
 		},
 		scroll: {

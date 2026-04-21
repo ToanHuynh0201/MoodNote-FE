@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
-	ActivityIndicator,
 	Alert,
 	KeyboardAvoidingView,
 	Platform,
@@ -15,18 +14,17 @@ import {
 	TextInput,
 	View,
 } from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
 
 import { Badge } from "@/components/ui/display/Badge";
 import { Button } from "@/components/ui/buttons/Button";
-import { RichTextEditor } from "@/components/journal";
+import { RichTextEditor, SaveStatusBanner } from "@/components/journal";
 import type { RichTextEditorRef } from "@/components/journal";
 import { ScreenWrapper } from "@/components/layout/ScreenWrapper";
 import { useAutoSave, useForm, useThemeColors } from "@/hooks";
 import { entryService } from "@/services";
 import { createEntryFormSchema } from "@/schemas/entry.schemas";
 import type { ThemeColors } from "@/theme";
-import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
+import { FONT_SIZE, RADIUS, SPACING } from "@/theme";
 import { s, vs, htmlToText } from "@/utils";
 import type { QuillDelta } from "@/types/entry.types";
 
@@ -127,44 +125,6 @@ export default function CreateEntryScreen() {
 		}
 	}, [formState.isDirty, contentDirty, saveStatus]);
 
-	// ── Save status indicator (animated fade between states) ─────────────────
-
-	const SaveIndicator = useMemo(() => {
-		if (saveStatus === "saving") {
-			return (
-				<Animated.View
-					key="saving"
-					entering={FadeIn.duration(200)}
-					style={styles.saveIndicator}>
-					<ActivityIndicator size="small" color={colors.text.muted} />
-					<Text style={styles.saveText}>Đang lưu...</Text>
-				</Animated.View>
-			);
-		}
-		if (saveStatus === "saved") {
-			return (
-				<Animated.View
-					key="saved"
-					entering={FadeIn.duration(200)}
-					style={styles.saveIndicator}>
-					<Ionicons name="checkmark-circle" size={s(16)} color={colors.status.success} />
-					<Text style={[styles.saveText, { color: colors.status.success }]}>Đã lưu</Text>
-				</Animated.View>
-			);
-		}
-		if (saveStatus === "error") {
-			return (
-				<Animated.View
-					key="error"
-					entering={FadeIn.duration(200)}
-					style={styles.saveIndicator}>
-					<Ionicons name="alert-circle" size={s(16)} color={colors.status.error} />
-					<Text style={[styles.saveText, { color: colors.status.error }]}>Lỗi lưu</Text>
-				</Animated.View>
-			);
-		}
-		return null;
-	}, [saveStatus, colors, styles]);
 
 	return (
 		<ScreenWrapper padded={false}>
@@ -173,7 +133,7 @@ export default function CreateEntryScreen() {
 				<Pressable onPress={handleBack} hitSlop={8} accessibilityRole="button" accessibilityLabel="Quay lại">
 					<Ionicons name="chevron-back" size={s(24)} color={colors.text.primary} />
 				</Pressable>
-				{SaveIndicator}
+				<SaveStatusBanner status={saveStatus} />
 				<View style={styles.headerSpacer} />
 			</View>
 
@@ -274,16 +234,6 @@ function createStyles(colors: ThemeColors) {
 			borderBottomColor: colors.border.subtle,
 		},
 		headerSpacer: { width: s(24) },
-		saveIndicator: {
-			flexDirection: "row",
-			alignItems: "center",
-			gap: s(4),
-		},
-		saveText: {
-			fontSize: FONT_SIZE[12],
-			color: colors.text.muted,
-			lineHeight: LINE_HEIGHT.tight,
-		},
 		scrollContent: {
 			paddingHorizontal: SPACING[20],
 			paddingTop: SPACING[12],

@@ -15,6 +15,8 @@ export const DARK_THEME: ThemeColors = {
 		gradientStart: PALETTE.purple[800],
 		gradientEnd: PALETTE.purple[900],
 		glassCard: PALETTE.glass.cardDark,
+		skeleton: PALETTE.purple[600],
+		skeletonHighlight: PALETTE.purple[500],
 	},
 
 	text: {

@@ -1,5 +1,6 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useRef } from "react";
-import { Animated, StyleSheet } from "react-native";
+import { Animated, StyleSheet, View, useWindowDimensions } from "react-native";
 
 import { useThemeColors } from "@/hooks";
 import type { ThemeColors } from "@/theme";
@@ -12,40 +13,47 @@ export function SkeletonLoader({
 	style,
 }: SkeletonLoaderProps) {
 	const colors = useThemeColors();
-	const shimmer = useRef(new Animated.Value(0)).current;
 	const styles = useMemo(() => createStyles(colors), [colors]);
+	const { width: screenWidth } = useWindowDimensions();
+
+	const shimmer = useRef(new Animated.Value(0)).current;
 
 	useEffect(() => {
 		const animation = Animated.loop(
-			Animated.sequence([
-				Animated.timing(shimmer, {
-					toValue: 1,
-					duration: 750,
-					useNativeDriver: true,
-				}),
-				Animated.timing(shimmer, {
-					toValue: 0,
-					duration: 750,
-					useNativeDriver: true,
-				}),
-			]),
+			Animated.timing(shimmer, {
+				toValue: 1,
+				duration: 1400,
+				useNativeDriver: true,
+			}),
 		);
 		animation.start();
 		return () => animation.stop();
 	}, [shimmer]);
 
-	const opacity = shimmer.interpolate({
+	const translateX = shimmer.interpolate({
 		inputRange: [0, 1],
-		outputRange: [0.4, 0.9],
+		outputRange: [-screenWidth, screenWidth],
 	});
 
 	return (
-		<Animated.View style={[styles.skeleton, { width, height, borderRadius, opacity }, style]} />
+		<View style={[styles.skeleton, { width, height, borderRadius }, style]}>
+			<Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX }] }]}>
+				<LinearGradient
+					colors={[colors.background.skeleton, colors.background.skeletonHighlight, colors.background.skeleton]}
+					start={{ x: 0, y: 0 }}
+					end={{ x: 1, y: 0 }}
+					style={StyleSheet.absoluteFill}
+				/>
+			</Animated.View>
+		</View>
 	);
 }
 
 function createStyles(colors: ThemeColors) {
 	return StyleSheet.create({
-		skeleton: { backgroundColor: colors.background.elevated },
+		skeleton: {
+			backgroundColor: colors.background.skeleton,
+			overflow: "hidden",
+		},
 	});
 }

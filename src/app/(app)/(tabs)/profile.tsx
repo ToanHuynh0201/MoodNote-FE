@@ -1,4 +1,4 @@
-import { Avatar, Badge, Button, ToggleSwitch } from "@/components";
+import { Avatar, Badge, Button, ScreenWrapper, ToggleSwitch } from "@/components";
 import { Divider } from "@/components/ui/display/Divider";
 import { Input } from "@/components/ui/inputs/Input";
 import { ROUTES } from "@/constants";
@@ -14,7 +14,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 // FR-05: Profile / settings screen
 export default function ProfileScreen() {
@@ -53,7 +52,7 @@ export default function ProfileScreen() {
 	const isDark = colorScheme === "dark";
 
 	return (
-		<SafeAreaView style={styles.safe}>
+		<ScreenWrapper padded={false}>
 			<ScrollView
 				contentContainerStyle={styles.scrollContent}
 				showsVerticalScrollIndicator={false}
@@ -165,7 +164,7 @@ export default function ProfileScreen() {
 					<Button title="Đăng xuất" variant="danger" fullWidth onPress={handleLogout} />
 				</View>
 			</ScrollView>
-		</SafeAreaView>
+		</ScreenWrapper>
 	);
 }
 
