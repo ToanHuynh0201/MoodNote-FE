@@ -4,6 +4,7 @@ import { Button, Input } from "@/components/ui";
 import { AUTH_RESEND_COOLDOWN_SECONDS, FORGOT_PASSWORD_TOTAL_STEPS, ROUTES } from "@/constants";
 import { useAuth, useThemeColors } from "@/hooks";
 import { useForm } from "@/hooks/useForm";
+import { authService } from "@/services";
 import { forgotPasswordSchema, newPasswordSchema, verifyOtpSchema } from "@/schemas";
 import type { ThemeColors } from "@/theme";
 import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
@@ -94,12 +95,12 @@ export default function ForgotPasswordScreen() {
 		if (resendTimer > 0 || isResending) return;
 		setIsResending(true);
 		try {
-			await forgotPassword({ email });
+			await authService.resendResetOtp({ email });
 			setResendTimer(AUTH_RESEND_COOLDOWN_SECONDS);
 		} finally {
 			setIsResending(false);
 		}
-	}, [resendTimer, isResending, forgotPassword, email]);
+	}, [resendTimer, isResending, email]);
 
 	const togglePasswordVisible = useCallback(() => setPasswordVisible((v) => !v), []);
 	const toggleConfirmPasswordVisible = useCallback(() => setConfirmPasswordVisible((v) => !v), []);

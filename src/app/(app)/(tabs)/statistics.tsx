@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import { ScreenWrapper } from "@/components";
-import { CalendarSkeleton, MonthlyCalendar, SentimentLineChart, WeeklyOverview, WeeklySectionSkeleton } from "@/components/statistics";
+import { CalendarSkeleton, EmotionChartSection, KeywordsSection, MonthlyCalendar, PatternsSection, SentimentLineChart, WeeklyOverview, WeeklySectionSkeleton } from "@/components/statistics";
 import { useStatistics, useThemeColors } from "@/hooks";
 import type { ThemeColors } from "@/theme";
 import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
@@ -121,6 +121,21 @@ export default function StatisticsScreen() {
 							</Text>
 						</View>
 					)}
+				</View>
+
+				{/* ── Emotion chart section ── */}
+				<View style={styles.section}>
+					<EmotionChartSection />
+				</View>
+
+				{/* ── Keywords section ── */}
+				<View style={styles.section}>
+					<KeywordsSection />
+				</View>
+
+				{/* ── Patterns section ── */}
+				<View style={styles.section}>
+					<PatternsSection />
 				</View>
 			</ScrollView>
 		</ScreenWrapper>

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo } from "react";
-import { ActivityIndicator, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 import { useThemeColors } from "@/hooks";
@@ -9,12 +9,31 @@ import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import { s } from "@/utils";
 
 interface SaveStatusBannerProps {
-	status: "idle" | "saving" | "saved" | "error";
+	status: "idle" | "unsaved" | "saving" | "saved" | "error";
+	/** When provided, tapping the "unsaved" or "error" pill triggers an immediate save. */
+	onSaveNow?: () => void;
 }
 
-export function SaveStatusBanner({ status }: SaveStatusBannerProps) {
+export function SaveStatusBanner({ status, onSaveNow }: SaveStatusBannerProps) {
 	const colors = useThemeColors();
 	const styles = useMemo(() => createStyles(colors), [colors]);
+
+	if (status === "unsaved") {
+		return (
+			<Animated.View key="unsaved" entering={FadeIn.duration(200)}>
+				<Pressable
+					onPress={onSaveNow}
+					disabled={onSaveNow === undefined}
+					hitSlop={8}
+					accessibilityRole="button"
+					accessibilityLabel="Lưu ngay"
+					style={[styles.pill, styles.pillWarning]}>
+					<Ionicons name="cloud-upload-outline" size={s(14)} color={colors.status.warning} />
+					<Text style={[styles.text, styles.textWarning]}>Chưa lưu</Text>
+				</Pressable>
+			</Animated.View>
+		);
+	}
 
 	if (status === "saving") {
 		return (
@@ -39,12 +58,17 @@ export function SaveStatusBanner({ status }: SaveStatusBannerProps) {
 
 	if (status === "error") {
 		return (
-			<Animated.View
-				key="error"
-				entering={FadeIn.duration(200)}
-				style={[styles.pill, styles.pillError]}>
-				<Ionicons name="alert-circle" size={s(14)} color={colors.status.error} />
-				<Text style={[styles.text, styles.textError]}>Lỗi lưu</Text>
+			<Animated.View key="error" entering={FadeIn.duration(200)}>
+				<Pressable
+					onPress={onSaveNow}
+					disabled={onSaveNow === undefined}
+					hitSlop={8}
+					accessibilityRole="button"
+					accessibilityLabel="Thử lưu lại"
+					style={[styles.pill, styles.pillError]}>
+					<Ionicons name="alert-circle" size={s(14)} color={colors.status.error} />
+					<Text style={[styles.text, styles.textError]}>Lỗi lưu</Text>
+				</Pressable>
 			</Animated.View>
 		);
 	}
@@ -63,6 +87,9 @@ function createStyles(colors: ThemeColors) {
 			borderRadius: RADIUS.full,
 			backgroundColor: colors.background.elevated,
 		},
+		pillWarning: {
+			backgroundColor: colors.status.warningBackground,
+		},
 		pillSuccess: {
 			backgroundColor: colors.status.successBackground,
 		},
@@ -73,6 +100,9 @@ function createStyles(colors: ThemeColors) {
 			fontSize: FONT_SIZE[12],
 			lineHeight: LINE_HEIGHT.tight,
 			color: colors.text.muted,
+		},
+		textWarning: {
+			color: colors.status.warning,
 		},
 		textSuccess: {
 			color: colors.status.success,

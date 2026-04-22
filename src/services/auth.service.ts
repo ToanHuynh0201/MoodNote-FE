@@ -7,6 +7,7 @@ import type {
 	ForgotPasswordPayload,
 	LoginPayload,
 	RegisterPayload,
+	ResendResetOtpPayload,
 	ResendVerificationPayload,
 	ResetPasswordPayload,
 	User,
@@ -50,6 +51,11 @@ export const authService = {
 	// FR-03: Verify reset OTP — confirms OTP is valid (no token returned)
 	verifyResetOtp: withErrorHandling((payload: VerifyResetOtpPayload) =>
 		api.post<ApiResponse<null>>("/auth/verify-reset-otp", payload),
+	),
+
+	// FR-03: Resend reset OTP (when OTP expired or not received)
+	resendResetOtp: withErrorHandling((payload: ResendResetOtpPayload) =>
+		api.post<ApiResponse<{ message: string }>>("/auth/resend-reset-otp", payload),
 	),
 
 	// FR-03: Reset password using resetToken from verifyResetOtp

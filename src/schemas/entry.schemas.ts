@@ -2,15 +2,15 @@ import { z } from "zod";
 
 // ─── Reusable field schemas ──────────────────────────────────────────────────
 
-// FR-08: letters/numbers/hyphens only; 2–20 chars (SRS); case already lowercased by addTag()
+// FR-08: letters/numbers/hyphens only; 2–30 chars; case already lowercased by addTag()
 const tagSchema = z
 	.string()
 	.min(2, "Tag phải có ít nhất 2 ký tự")
-	.max(20, "Tag tối đa 20 ký tự")
+	.max(30, "Tag tối đa 30 ký tự")
 	.regex(/^[a-z0-9-]+$/, "Tag chỉ được chứa chữ cái, số và gạch ngang");
 
-// FR-08: max 5 tags per entry (SRS FR-08: 0–5)
-const tagsSchema = z.array(tagSchema).max(5, "Tối đa 5 thẻ").default([]);
+// FR-08: max 10 tags per entry
+const tagsSchema = z.array(tagSchema).max(10, "Tối đa 10 thẻ").default([]);
 
 const titleSchema = z.string().max(100, "Tiêu đề tối đa 100 ký tự").optional();
 

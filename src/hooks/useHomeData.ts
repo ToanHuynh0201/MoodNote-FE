@@ -2,7 +2,7 @@
 
 import { entryService, musicService, statsService, userService } from "@/services";
 import type { EntryListItem } from "@/types/entry.types";
-import type { MusicRecommendation } from "@/types/music.types";
+import type { RecentMusicRecommendation } from "@/types/music.types";
 import type { StatsSummary } from "@/types/stats.types";
 import { logError } from "@/utils";
 import { useCallback, useEffect, useState } from "react";
@@ -11,7 +11,7 @@ interface HomeData {
 	username: string;
 	streaks: StatsSummary | null;
 	recentEntries: EntryListItem[];
-	recentPlaylist: MusicRecommendation | null;
+	recentPlaylist: RecentMusicRecommendation | null;
 }
 
 interface UseHomeDataResult {
@@ -27,7 +27,7 @@ async function fetchAllHomeData(): Promise<HomeData> {
 		userService.getMe(),
 		statsService.getSummary(),
 		entryService.getList({ limit: 3 }),
-		musicService.getRecent(4),
+		musicService.getRecent(5),
 	]);
 
 	return {

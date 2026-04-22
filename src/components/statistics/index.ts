@@ -1,6 +1,9 @@
 export { CalendarSkeleton } from "./CalendarSkeleton";
 export { EmotionIcon } from "./EmotionIcon";
+export { EmotionChartSection } from "./EmotionChartSection";
+export { KeywordsSection } from "./KeywordsSection";
 export { MonthlyCalendar } from "./MonthlyCalendar";
+export { PatternsSection } from "./PatternsSection";
 export { SentimentLineChart } from "./SentimentLineChart";
 export { WeeklyOverview } from "./WeeklyOverview";
 export { WeeklySectionSkeleton } from "./WeeklySectionSkeleton";

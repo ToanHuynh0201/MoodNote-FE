@@ -22,19 +22,25 @@ import Animated, {
 	withTiming,
 } from "react-native-reanimated";
 
-import { Badge } from "@/components/ui/display/Badge";
-import { Button } from "@/components/ui/buttons/Button";
-import { EmotionAnalysisCard, EntryDetailSkeleton, RichTextEditor, SaveStatusBanner } from "@/components/journal";
 import type { RichTextEditorRef } from "@/components/journal";
+import {
+	EmotionAnalysisCard,
+	EntryDetailSkeleton,
+	MusicRecommendationSection,
+	RichTextEditor,
+	SaveStatusBanner,
+} from "@/components/journal";
 import { ScreenWrapper } from "@/components/layout/ScreenWrapper";
+import { Button } from "@/components/ui/buttons/Button";
+import { Badge } from "@/components/ui/display/Badge";
 import { ANALYSIS_STATUS_LABELS } from "@/constants/journal";
 import { useAnalysisPolling, useAutoSave, useEntry, useForm, useThemeColors } from "@/hooks";
-import { entryService } from "@/services";
 import { editEntryFormSchema } from "@/schemas/entry.schemas";
+import { entryService } from "@/services";
 import type { ThemeColors } from "@/theme";
 import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
-import { htmlToText, s, vs } from "@/utils";
 import type { QuillDelta } from "@/types/entry.types";
+import { htmlToText, s, vs } from "@/utils";
 
 export default function EntryDetailScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
@@ -68,18 +74,17 @@ export default function EntryDetailScreen() {
 	}));
 
 	const chevronAnimStyle = useAnimatedStyle(() => ({
-		transform: [
-			{ rotate: `${interpolate(expandProgress.value, [0, 1], [0, 180])}deg` },
-		],
+		transform: [{ rotate: `${interpolate(expandProgress.value, [0, 1], [0, 180])}deg` }],
 	}));
 
 	const [tagInput, setTagInput] = useState("");
+	const [contentDirty, setContentDirty] = useState(false);
 
 	// Rich text editor state — managed outside react-hook-form
 	const deltaRef = useRef<QuillDelta>({ ops: [{ insert: "\n" }] });
 	const editorRef = useRef<RichTextEditorRef>(null);
 
-	const { watch, setValue, reset } = useForm({
+	const { watch, setValue, reset, formState } = useForm({
 		schema: editEntryFormSchema,
 		defaultValues: { title: "", tags: [] },
 		onSubmit: async () => {},
@@ -123,7 +128,7 @@ export default function EntryDetailScreen() {
 		});
 	}, [watch, updateEntry]);
 
-	const { saveStatus, triggerSave, triggerImmediately } = useAutoSave({ saveFn });
+	const { saveStatus, triggerSave, triggerImmediately, isSaving } = useAutoSave({ saveFn });
 
 	// ── Tag management (FR-08) ───────────────────────────────────────────────
 
@@ -150,26 +155,49 @@ export default function EntryDetailScreen() {
 	// ── Delete (FR-09) ───────────────────────────────────────────────────────
 
 	const handleDelete = useCallback(() => {
-		Alert.alert(
-			"Xoá nhật ký",
-			"Bạn có chắc muốn xoá nhật ký này? Thao tác không thể hoàn tác.",
-			[
-				{ text: "Huỷ", style: "cancel" },
-				{
-					text: "Xoá",
-					style: "destructive",
-					onPress: async () => {
+		Alert.alert("Xoá nhật ký", "Bạn có chắc muốn xoá nhật ký này? Thao tác không thể hoàn tác.", [
+			{ text: "Huỷ", style: "cancel" },
+			{
+				text: "Xoá",
+				style: "destructive",
+				onPress: async () => {
+					try {
+						await deleteEntry();
+						router.back();
+					} catch {
+						Alert.alert("Lỗi", "Không thể xoá nhật ký. Vui lòng thử lại.");
+					}
+				},
+			},
+		]);
+	}, [deleteEntry]);
+
+	// ── Navigation ───────────────────────────────────────────────────────────
+
+	const handleBack = useCallback(() => {
+		const needsConfirm = (formState.isDirty || contentDirty) && saveStatus !== "saved";
+		if (!needsConfirm) {
+			router.back();
+			return;
+		}
+		Alert.alert("Huỷ thay đổi?", "Nhật ký chưa được lưu. Bạn muốn làm gì?", [
+			{ text: "Tiếp tục viết", style: "cancel" },
+			{
+				text: "Lưu và quay lại",
+				onPress: () => {
+					void (async () => {
 						try {
-							await deleteEntry();
+							await triggerImmediately();
 							router.back();
 						} catch {
-							Alert.alert("Lỗi", "Không thể xoá nhật ký. Vui lòng thử lại.");
+							/* stay; banner shows error */
 						}
-					},
+					})();
 				},
-			],
-		);
-	}, [deleteEntry]);
+			},
+			{ text: "Huỷ bỏ", style: "destructive", onPress: () => router.back() },
+		]);
+	}, [formState.isDirty, contentDirty, saveStatus, triggerImmediately]);
 
 	// ── Retry analysis (FR-10) ──────────────────────────────────────────────
 
@@ -185,7 +213,7 @@ export default function EntryDetailScreen() {
 
 	// ── Loading / error states ────────────────────────────────────────────────
 
-	if (isLoading) {
+	if (isLoading || (!currentEntry && !error)) {
 		return <EntryDetailSkeleton />;
 	}
 
@@ -200,25 +228,31 @@ export default function EntryDetailScreen() {
 		);
 	}
 
-	const statusColor = {
-		PENDING: colors.text.muted,
-		PROCESSING: colors.status.info,
-		COMPLETED: colors.status.success,
-		FAILED: colors.status.error,
-	}[currentEntry.analysisStatus] ?? colors.text.muted;
+	const statusColor =
+		{
+			PENDING: colors.text.muted,
+			PROCESSING: colors.status.info,
+			COMPLETED: colors.status.success,
+			FAILED: colors.status.error,
+		}[currentEntry.analysisStatus] ?? colors.text.muted;
 
 	return (
 		<ScreenWrapper padded={false}>
 			{/* Header */}
 			<View style={styles.header}>
 				<Pressable
-					onPress={() => router.back()}
+					onPress={handleBack}
 					hitSlop={8}
+					disabled={isSaving}
 					accessibilityRole="button"
 					accessibilityLabel="Quay lại">
-					<Ionicons name="chevron-back" size={s(24)} color={colors.text.primary} />
+					<Ionicons
+						name="chevron-back"
+						size={s(24)}
+						color={isSaving ? colors.interactive.disabled : colors.text.primary}
+					/>
 				</Pressable>
-				<SaveStatusBanner status={saveStatus} />
+				<SaveStatusBanner status={saveStatus} onSaveNow={() => void triggerImmediately()} />
 				<Pressable
 					onPress={handleDelete}
 					hitSlop={8}
@@ -236,7 +270,6 @@ export default function EntryDetailScreen() {
 					contentContainerStyle={styles.scrollContent}
 					keyboardShouldPersistTaps="handled"
 					showsVerticalScrollIndicator={false}>
-
 					{/* Analysis status — tappable dropdown when COMPLETED */}
 					<Pressable
 						style={styles.statusRow}
@@ -307,6 +340,7 @@ export default function EntryDetailScreen() {
 						minHeight={vs(300)}
 						onChange={(delta) => {
 							deltaRef.current = delta;
+							setContentDirty(true);
 							triggerSave();
 						}}
 						onBlur={() => void triggerImmediately()}
@@ -323,19 +357,17 @@ export default function EntryDetailScreen() {
 								style={styles.tagsScroll}
 								contentContainerStyle={styles.tagsContent}>
 								{currentTags.map((tag) => (
-									<Badge
-										key={tag}
-										label={`#${tag}`}
-										size="sm"
-										onDismiss={() => removeTag(tag)}
-									/>
+									<Badge key={tag} label={`#${tag}`} size="sm" onDismiss={() => removeTag(tag)} />
 								))}
 							</ScrollView>
 						)}
 
 						<View style={styles.tagInputRow}>
 							<TextInput
-								style={[styles.tagInput, { color: colors.input.text, borderColor: colors.input.border }]}
+								style={[
+									styles.tagInput,
+									{ color: colors.input.text, borderColor: colors.input.border },
+								]}
 								placeholder="Thêm thẻ..."
 								placeholderTextColor={colors.input.placeholder}
 								value={tagInput}
@@ -354,6 +386,14 @@ export default function EntryDetailScreen() {
 							/>
 						</View>
 					</View>
+
+					{/* Music recommendation (FR-11) */}
+					{currentEntry.analysisStatus === "COMPLETED" && (
+						<MusicRecommendationSection
+							entryId={currentEntry.id}
+							musicStatus={currentEntry.musicStatus}
+						/>
+					)}
 				</ScrollView>
 			</KeyboardAvoidingView>
 		</ScreenWrapper>

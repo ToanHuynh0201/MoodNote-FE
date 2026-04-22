@@ -2,7 +2,17 @@
 
 import { apiService as api } from "@/lib/api";
 import type { ApiResponse } from "@/types";
-import type { MonthlyCalendar, StatsSummary, WeeklyStats } from "@/types/stats.types";
+import type {
+	EmotionChartData,
+	GetEmotionChartParams,
+	GetKeywordsParams,
+	GetPatternsParams,
+	KeywordsData,
+	MonthlyCalendar,
+	PatternsData,
+	StatsSummary,
+	WeeklyStats,
+} from "@/types/stats.types";
 import { withErrorHandling } from "@/utils/error";
 
 export const statsService = {
@@ -21,5 +31,20 @@ export const statsService = {
 		api.get<ApiResponse<MonthlyCalendar>>("/stats/monthly-calendar", {
 			params: { year, month },
 		}),
+	),
+
+	// GET /stats/emotion-chart → sentiment trend over a date range
+	getEmotionChart: withErrorHandling((params?: GetEmotionChartParams) =>
+		api.get<ApiResponse<EmotionChartData>>("/stats/emotion-chart", { params }),
+	),
+
+	// GET /stats/keywords → top keywords from analyzed entries
+	getKeywordStats: withErrorHandling((params?: GetKeywordsParams) =>
+		api.get<ApiResponse<KeywordsData>>("/stats/keywords", { params }),
+	),
+
+	// GET /stats/patterns → writing patterns by day-of-week and time-of-day
+	getPatterns: withErrorHandling((params?: GetPatternsParams) =>
+		api.get<ApiResponse<PatternsData>>("/stats/patterns", { params }),
 	),
 };

@@ -1,15 +1,15 @@
 import { useMemo } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { useThemeColors } from "@/hooks";
 import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import type { ThemeColors } from "@/theme";
-import type { Track } from "@/types/music.types";
+import type { TrackSimple } from "@/types/music.types";
 import { s, vs } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
-	track: Track;
+	track: TrackSimple;
 }
 
 function formatDuration(ms: number): string {
@@ -28,17 +28,9 @@ export function PlaylistTrackItem({ track }: Props) {
 	return (
 		<View style={styles.container}>
 			{/* Album thumbnail */}
-			{track.albumImageUrl != null ? (
-				<Image
-					source={{ uri: track.albumImageUrl }}
-					style={styles.thumbnail}
-					accessibilityLabel={`Album ${track.albumName}`}
-				/>
-			) : (
-				<View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-					<Ionicons name="musical-notes" size={s(20)} color={colors.text.muted} />
-				</View>
-			)}
+			<View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
+				<Ionicons name="musical-notes" size={s(20)} color={colors.text.muted} />
+			</View>
 
 			{/* Track info */}
 			<View style={styles.info}>

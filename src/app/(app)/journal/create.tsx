@@ -80,7 +80,7 @@ export default function CreateEntryScreen() {
 		}
 	}, [watch]);
 
-	const { saveStatus, triggerSave, triggerImmediately } = useAutoSave({ saveFn });
+	const { saveStatus, triggerSave, triggerImmediately, isSaving } = useAutoSave({ saveFn });
 
 	// ── Tag management (FR-08) ───────────────────────────────────────────────
 
@@ -107,33 +107,35 @@ export default function CreateEntryScreen() {
 	// ── Navigation ───────────────────────────────────────────────────────────
 
 	const handleBack = useCallback(() => {
-		if ((formState.isDirty || contentDirty) && saveStatus !== "saved" && entryIdRef.current !== null) {
-			Alert.alert(
-				"Huỷ thay đổi?",
-				"Nhật ký chưa được lưu. Bạn có muốn huỷ bỏ?",
-				[
-					{ text: "Tiếp tục viết", style: "cancel" },
-					{
-						text: "Huỷ bỏ",
-						style: "destructive",
-						onPress: () => router.back(),
+		const needsConfirm = (formState.isDirty || contentDirty) && saveStatus !== "saved";
+		if (!needsConfirm) { router.back(); return; }
+		Alert.alert(
+			"Huỷ thay đổi?",
+			"Nhật ký chưa được lưu. Bạn muốn làm gì?",
+			[
+				{ text: "Tiếp tục viết", style: "cancel" },
+				{
+					text: "Lưu và quay lại",
+					onPress: () => {
+						void (async () => {
+							try { await triggerImmediately(); router.back(); } catch { /* stay; banner shows error */ }
+						})();
 					},
-				],
-			);
-		} else {
-			router.back();
-		}
-	}, [formState.isDirty, contentDirty, saveStatus]);
+				},
+				{ text: "Huỷ bỏ", style: "destructive", onPress: () => router.back() },
+			],
+		);
+	}, [formState.isDirty, contentDirty, saveStatus, triggerImmediately]);
 
 
 	return (
 		<ScreenWrapper padded={false}>
 			{/* Header — outside KAV so keyboard doesn't push it up */}
 			<View style={styles.header}>
-				<Pressable onPress={handleBack} hitSlop={8} accessibilityRole="button" accessibilityLabel="Quay lại">
-					<Ionicons name="chevron-back" size={s(24)} color={colors.text.primary} />
+				<Pressable onPress={handleBack} hitSlop={8} disabled={isSaving} accessibilityRole="button" accessibilityLabel="Quay lại">
+					<Ionicons name="chevron-back" size={s(24)} color={isSaving ? colors.interactive.disabled : colors.text.primary} />
 				</Pressable>
-				<SaveStatusBanner status={saveStatus} />
+				<SaveStatusBanner status={saveStatus} onSaveNow={() => void triggerImmediately()} />
 				<View style={styles.headerSpacer} />
 			</View>
 

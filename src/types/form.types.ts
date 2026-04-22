@@ -42,19 +42,23 @@ export interface UseFormResult<TValues extends FieldValues>
 
 // ─── useAutoSave ───────────────────────────────────────────────────────────────
 
-export type SaveStatus = "idle" | "saving" | "saved" | "error";
+export type SaveStatus = "idle" | "unsaved" | "saving" | "saved" | "error";
 
 export interface UseAutoSaveOptions {
 	/** Async function that performs the actual save. Wrap in useCallback in the calling component. */
 	saveFn: () => Promise<void>;
-	/** Debounce delay in milliseconds. Defaults to 7000ms (FR-06: 5–10s). */
+	/** Debounce delay in milliseconds. Defaults to 5000ms (FR-06: 5–10s). */
 	delay?: number;
+	/** Maximum ms before forcing a save even during continuous typing. Defaults to 15000ms. */
+	maxWait?: number;
 }
 
 export interface UseAutoSaveResult {
 	saveStatus: SaveStatus;
-	/** Schedules a save after the debounce delay. Resets the timer if called again. */
+	/** Schedules a save after the debounce delay. Resets the timer if called again. Sets status to "unsaved" immediately. */
 	triggerSave: () => void;
 	/** Cancels any pending debounce and saves immediately. */
 	triggerImmediately: () => Promise<void>;
+	/** True while the async saveFn is in flight. */
+	isSaving: boolean;
 }

@@ -1,6 +1,7 @@
 // FR-06, FR-08, FR-09: Journal entry types
 
 export type AnalysisStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+export type MusicStatus = "PENDING" | "GENERATING" | "COMPLETED" | "FAILED";
 export type InputMethod = "TEXT" | "VOICE";
 
 // ─── Quill Delta format (FR-06: content format) ─────────────────────────────
@@ -52,15 +53,10 @@ export interface Entry {
 	wordCount: number;
 	isPrivate: boolean;
 	analysisStatus: AnalysisStatus;
+	musicStatus: MusicStatus;
 	emotionAnalysis: EmotionAnalysis | null;
 	createdAt: string;
 	updatedAt: string;
-}
-
-/** Partial emotion analysis returned inline with list items */
-export interface EntryListEmotionAnalysis {
-	primaryEmotion: EmotionType;
-	sentimentScore: number;
 }
 
 /** List item — returned by GET /entries (preview instead of full content) */
@@ -74,8 +70,9 @@ export interface EntryListItem {
 	wordCount: number;
 	isPrivate: boolean;
 	analysisStatus: AnalysisStatus;
-	/** Present when analysisStatus === "COMPLETED", null otherwise */
-	emotionAnalysis: EntryListEmotionAnalysis | null;
+	musicStatus: MusicStatus;
+	/** Spec: always null in list response — use GET /entries/:id for full analysis */
+	emotionAnalysis: null;
 	createdAt: string;
 	updatedAt: string;
 }
