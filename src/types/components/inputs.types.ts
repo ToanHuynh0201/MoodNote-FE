@@ -45,3 +45,12 @@ export interface SegmentedControlProps {
 	value: string;
 	onChange: (value: string) => void;
 }
+
+export interface PinInputProps {
+	value: string;
+	onChange: (value: string) => void;
+	length?: number;
+	error?: boolean;
+	autoFocus?: boolean;
+	secureEntry?: boolean;
+}

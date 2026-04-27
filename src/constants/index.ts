@@ -8,6 +8,7 @@ export * from "./feedback";
 export * from "./journal";
 export * from "./navigation";
 export * from "./notifications";
+export * from "./privacy";
 export * from "./stats";
 export * from "./ui";
 
@@ -85,6 +86,8 @@ export const ROUTES = {
 	}),
 	NOTIFICATIONS: "/(app)/notifications" as const,
 	NOTIFICATION_SETTINGS: "/(app)/notifications/settings" as const,
+	PRIVACY_SETTINGS: "/(app)/privacy/settings" as const,
+	PRIVACY_PIN_SETUP: "/(app)/privacy/pin-setup" as const,
 };
 
 export const THEME_STORAGE_KEY = "moodnote_theme";

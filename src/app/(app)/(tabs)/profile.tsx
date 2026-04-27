@@ -159,6 +159,21 @@ export default function ProfileScreen() {
 					</Pressable>
 				</View>
 
+				{/* Privacy */}
+				<View style={styles.card}>
+					<Pressable
+						style={styles.menuRow}
+						onPress={() => router.push(ROUTES.PRIVACY_SETTINGS as never)}
+						accessibilityLabel="Quyền riêng tư"
+						accessibilityRole="button">
+						<View style={styles.menuRowLeft}>
+							<Ionicons name="lock-closed-outline" size={s(20)} color={colors.iconDefault} />
+							<Text style={styles.menuLabel}>Quyền riêng tư</Text>
+						</View>
+						<Ionicons name="chevron-forward" size={s(16)} color={colors.text.muted} />
+					</Pressable>
+				</View>
+
 				{/* Logout */}
 				<View style={styles.card}>
 					<Button title="Đăng xuất" variant="danger" fullWidth onPress={handleLogout} />

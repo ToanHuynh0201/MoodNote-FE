@@ -1,3 +1,4 @@
+export * from "./appLock";
 export * from "./home";
 export * from "./journal";
 export * from "./layout";

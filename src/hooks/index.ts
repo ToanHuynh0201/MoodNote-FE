@@ -1,4 +1,5 @@
 export { useAnalysisPolling } from "./useAnalysisPolling";
+export { useAppLock } from "./useAppLock";
 export { useAuth } from "./useAuth";
 export { useForm } from "./useForm";
 export { useThemeColors } from "./useThemeColors";

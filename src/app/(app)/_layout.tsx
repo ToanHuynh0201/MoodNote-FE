@@ -1,19 +1,38 @@
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 
+import { LockScreen } from "@/components/appLock";
 import { ProtectedRoute } from "@/components/navigation";
 import { NotificationPopupProvider, useNotificationPopup } from "@/components/ui/feedback";
-import { getInitialNotification, getMessaging, onMessage, onNotificationOpenedApp } from "@react-native-firebase/messaging";
-import { useNotificationStore } from "@/store";
 import { ROUTES } from "@/constants";
+import { getInitialNotification, getMessaging, onMessage, onNotificationOpenedApp } from "@react-native-firebase/messaging";
+import { useAppLockStore, useNotificationStore } from "@/store";
 import { router } from "expo-router";
-import { View } from "react-native";
+import { AppState, View } from "react-native";
 
 // ─── Inner content (needs to be inside NotificationPopupProvider to use useNotificationPopup) ─────────
 
 function AppContent() {
 	const { show } = useNotificationPopup();
 	const incrementUnreadCount = useNotificationStore((s) => s.incrementUnreadCount);
+	const appLockInitialize = useAppLockStore((s) => s.initialize);
+	const onBackground = useAppLockStore((s) => s.onBackground);
+	const onForeground = useAppLockStore((s) => s.onForeground);
+
+	useEffect(() => {
+		void appLockInitialize();
+	}, [appLockInitialize]);
+
+	useEffect(() => {
+		const sub = AppState.addEventListener("change", (nextState) => {
+			if (nextState === "background" || nextState === "inactive") {
+				onBackground();
+			} else if (nextState === "active") {
+				onForeground();
+			}
+		});
+		return () => sub.remove();
+	}, [onBackground, onForeground]);
 
 	useEffect(() => {
 		// FR-21: Show in-app popup when a notification arrives in the foreground
@@ -58,7 +77,12 @@ function AppContent() {
 					name="notifications"
 					options={{ animation: "slide_from_right" }}
 				/>
+				<Stack.Screen
+					name="privacy"
+					options={{ animation: "slide_from_right" }}
+				/>
 			</Stack>
+			<LockScreen />
 		</View>
 	);
 }
