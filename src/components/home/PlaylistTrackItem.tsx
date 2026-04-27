@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 interface Props {
 	track: Track;
 	order: number;
+	score?: number | null;
 }
 
 type ChipVariant = "info" | "warning" | "success" | "brand";
@@ -38,7 +39,7 @@ function formatDuration(ms: number): string {
 	return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-export function PlaylistTrackItem({ track, order }: Props) {
+export function PlaylistTrackItem({ track, order, score }: Props) {
 	const colors = useThemeColors();
 	const styles = useMemo(() => createStyles(colors), [colors]);
 	const [expanded, setExpanded] = useState(false);
@@ -60,8 +61,9 @@ export function PlaylistTrackItem({ track, order }: Props) {
 		const parts: string[] = [];
 		if (track.albumName != null) parts.push(track.albumName);
 		if (track.durationMs != null) parts.push(formatDuration(track.durationMs));
+		if (score != null) parts.push(score.toFixed(3));
 		return parts.length > 0 ? parts.join(" · ") : null;
-	}, [track.albumName, track.durationMs]);
+	}, [track.albumName, track.durationMs, score]);
 
 	const chips: FeatureChip[] = useMemo(() => {
 		const result: FeatureChip[] = [];

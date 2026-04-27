@@ -73,7 +73,7 @@ export default function HomeScreen() {
 				{/* Streak widgets */}
 				{streaks != null && (
 					<View style={styles.streakRow}>
-						<StreakCard iconType="smile" count={streaks.smileStreak} label="Cười mỗi ngày" />
+						<StreakCard iconType="smile" count={streaks.positiveStreak} label="Cười mỗi ngày" />
 						<StreakCard
 							iconType="fire"
 							count={streaks.writingStreak}
@@ -81,10 +81,10 @@ export default function HomeScreen() {
 							isHighlighted
 							iconBgColor={colors.brand.primary}
 						/>
-						{streaks.sadStreak >= 0 && (
+						{streaks.negativeStreak >= 0 && (
 							<StreakCard
 								iconType="cry"
-								count={streaks.sadStreak}
+								count={streaks.negativeStreak}
 								label="Buồn rồi, qua nhanh thôi"
 								iconBgColor={colors.mood.sadness}
 							/>

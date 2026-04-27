@@ -68,3 +68,17 @@ export interface ChangePasswordPayload {
 export interface ResendResetOtpPayload {
 	email: string;
 }
+
+// FR-05: User settings
+export type ThemePreference = "LIGHT" | "DARK" | "SYSTEM";
+
+export interface UserSettings {
+	theme: ThemePreference;
+	language: string;
+	updatedAt: string;
+}
+
+export interface UpdateSettingsPayload {
+	theme?: ThemePreference;
+	language?: string;
+}

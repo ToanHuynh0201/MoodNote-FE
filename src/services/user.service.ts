@@ -1,6 +1,6 @@
 import { apiService as api } from "@/lib/api";
 import type { ApiResponse } from "@/types";
-import type { UpdateProfilePayload, User } from "@/types/user.types";
+import type { UpdateProfilePayload, UpdateSettingsPayload, User, UserSettings } from "@/types/user.types";
 import { withErrorHandling } from "@/utils/error";
 
 // FR-05: User profile management
@@ -11,5 +11,15 @@ export const userService = {
 	// PATCH /users/me → data: User
 	updateMe: withErrorHandling((payload: UpdateProfilePayload) =>
 		api.patch<ApiResponse<User>>("/users/me", payload),
+	),
+
+	// GET /users/settings → data: { settings: UserSettings }
+	getSettings: withErrorHandling(() =>
+		api.get<ApiResponse<{ settings: UserSettings }>>("/users/settings"),
+	),
+
+	// PATCH /users/settings → data: { settings: UserSettings }
+	updateSettings: withErrorHandling((payload: UpdateSettingsPayload) =>
+		api.patch<ApiResponse<{ settings: UserSettings }>>("/users/settings", payload),
 	),
 };

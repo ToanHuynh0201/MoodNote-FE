@@ -16,7 +16,7 @@ import type {
 import { withErrorHandling } from "@/utils/error";
 
 export const statsService = {
-	// GET /stats/summary → writingStreak, smileStreak, sadStreak
+	// GET /stats/summary → writingStreak, positiveStreak, negativeStreak
 	getSummary: withErrorHandling(() =>
 		api.get<ApiResponse<StatsSummary>>("/stats/summary"),
 	),

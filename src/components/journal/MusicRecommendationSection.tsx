@@ -43,6 +43,12 @@ const MODE_LABELS: Record<string, string> = {
 	SHIFT: "Shift mode",
 };
 
+const STAGE_LABELS: Record<1 | 2 | 3, string> = {
+	1: "Match",
+	2: "Chuyển tiếp",
+	3: "Mục tiêu",
+};
+
 export function MusicRecommendationSection({ entryId, musicStatus }: Props) {
 	const colors = useThemeColors();
 	const styles = useMemo(() => createStyles(colors), [colors]);
@@ -128,13 +134,44 @@ export function MusicRecommendationSection({ entryId, musicStatus }: Props) {
 			</View>
 		);
 	} else if (recommendation != null) {
-		contentBody = (
-			<View>
-				{recommendation.tracks.map((item) => (
-					<PlaylistTrackItem key={String(item.order)} order={item.order} track={item.track} />
-				))}
-			</View>
-		);
+		if (recommendation.mode === "SHIFT") {
+			const groups: Array<{ stage: 1 | 2 | 3; items: typeof recommendation.tracks }> = [
+				{ stage: 1, items: recommendation.tracks.filter((t) => t.stage === 1) },
+				{ stage: 2, items: recommendation.tracks.filter((t) => t.stage === 2) },
+				{ stage: 3, items: recommendation.tracks.filter((t) => t.stage === 3) },
+			].filter((g) => g.items.length > 0);
+
+			contentBody = (
+				<View>
+					{groups.map((group) => (
+						<View key={group.stage}>
+							<Text style={styles.stageHeader}>{STAGE_LABELS[group.stage]}</Text>
+							{group.items.map((item) => (
+								<PlaylistTrackItem
+									key={String(item.order)}
+									order={item.order}
+									track={item.track}
+									score={item.score}
+								/>
+							))}
+						</View>
+					))}
+				</View>
+			);
+		} else {
+			contentBody = (
+				<View>
+					{recommendation.tracks.map((item) => (
+						<PlaylistTrackItem
+							key={String(item.order)}
+							order={item.order}
+							track={item.track}
+							score={item.score}
+						/>
+					))}
+				</View>
+			);
+		}
 	}
 
 	return (
@@ -154,6 +191,11 @@ export function MusicRecommendationSection({ entryId, musicStatus }: Props) {
 									{MODE_LABELS[recommendation.mode] ?? recommendation.mode}
 								</Text>
 							</View>
+							{recommendation.diagnostics?.moodKey != null && (
+								<View style={styles.modeBadge}>
+									<Text style={styles.modeText}>{recommendation.diagnostics.moodKey}</Text>
+								</View>
+							)}
 							<Pressable
 								onPress={handleRefresh}
 								hitSlop={8}
@@ -257,6 +299,15 @@ function createStyles(colors: ThemeColors) {
 			fontSize: FONT_SIZE[13],
 			color: colors.text.primary,
 			lineHeight: LINE_HEIGHT.normal,
+		},
+		stageHeader: {
+			fontSize: FONT_SIZE[11],
+			fontWeight: "600",
+			color: colors.text.muted,
+			lineHeight: LINE_HEIGHT.tight,
+			marginTop: SPACING[10],
+			marginBottom: SPACING[4],
+			textTransform: "uppercase",
 		},
 	});
 }

@@ -5,8 +5,8 @@ import type { EmotionType } from "./entry.types";
 // GET /stats/summary
 export interface StatsSummary {
 	writingStreak: number;
-	smileStreak: number;
-	sadStreak: number;
+	positiveStreak: number;
+	negativeStreak: number;
 }
 
 // GET /stats/weekly
