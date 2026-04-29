@@ -1,6 +1,6 @@
 // FR-06, FR-08: Reusable journal entry card for the list screen
 
-import { useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 
@@ -18,7 +18,7 @@ interface Props {
 	onPress: () => void;
 }
 
-export function EntryCard({ entry, onPress }: Props) {
+function EntryCardComponent({ entry, onPress }: Props) {
 	const colors = useThemeColors();
 	const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -108,6 +108,8 @@ export function EntryCard({ entry, onPress }: Props) {
 		</Pressable>
 	);
 }
+
+export const EntryCard = memo(EntryCardComponent);
 
 function createStyles(colors: ThemeColors) {
 	return StyleSheet.create({

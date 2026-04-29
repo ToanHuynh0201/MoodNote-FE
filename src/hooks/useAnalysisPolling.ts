@@ -1,7 +1,7 @@
 // FR-10: Poll GET /entries/:id while analysisStatus is PENDING or PROCESSING.
 // Stops when COMPLETED or FAILED (or on unmount).
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { ANALYSIS_POLLING_STATUSES, ANALYSIS_POLL_INTERVAL_MS } from "@/constants";
 import { entryService } from "@/services";
@@ -18,6 +18,11 @@ export function useAnalysisPolling({
 	currentStatus,
 	onUpdate,
 }: UseAnalysisPollingOptions): void {
+	const onUpdateRef = useRef(onUpdate);
+	useEffect(() => {
+		onUpdateRef.current = onUpdate;
+	});
+
 	useEffect(() => {
 		if (!entryId || !ANALYSIS_POLLING_STATUSES.includes(currentStatus)) {
 			return;
@@ -30,12 +35,12 @@ export function useAnalysisPolling({
 
 				const serverEntry = result.data.entry;
 				if (!ANALYSIS_POLLING_STATUSES.includes(serverEntry.analysisStatus)) {
-					onUpdate(serverEntry);
+					onUpdateRef.current(serverEntry);
 					clearInterval(intervalId);
 				}
 			})();
 		}, ANALYSIS_POLL_INTERVAL_MS);
 
 		return () => clearInterval(intervalId);
-	}, [entryId, currentStatus, onUpdate]);
+	}, [entryId, currentStatus]);
 }

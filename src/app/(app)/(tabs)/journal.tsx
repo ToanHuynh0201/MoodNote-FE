@@ -2,7 +2,7 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import ReanimatedSwipeable, {
 	type SwipeableMethods,
@@ -110,6 +110,37 @@ const swipeStyles = StyleSheet.create({
 	},
 });
 
+interface EntryRowProps {
+	item: EntryListItem;
+	onDelete: (item: EntryListItem) => void;
+}
+
+const EntryRow = memo(function EntryRow({ item, onDelete }: EntryRowProps) {
+	const handlePress = useCallback(() => {
+		router.push(ROUTES.JOURNAL_DETAIL(item.id));
+	}, [item.id]);
+
+	return (
+		<View>
+			<ReanimatedSwipeable
+				renderRightActions={(progress, drag, swipeable) => (
+					<SwipeDeleteAction
+						progress={progress}
+						drag={drag}
+						swipeable={swipeable}
+						onPress={() => onDelete(item)}
+						onAutoDelete={() => onDelete(item)}
+					/>
+				)}
+				rightThreshold={SWIPE_DELETE_ACTION_WIDTH * 0.8}
+				overshootFriction={6}
+				friction={1.5}>
+				<EntryCard entry={item} onPress={handlePress} />
+			</ReanimatedSwipeable>
+		</View>
+	);
+});
+
 export default function JournalScreen() {
 	const colors = useThemeColors();
 	const styles = useMemo(() => createStyles(colors), [colors]);
@@ -148,25 +179,7 @@ export default function JournalScreen() {
 			if (isSectionHeader(item)) {
 				return <Text style={styles.sectionHeader}>{item.title}</Text>;
 			}
-			return (
-				<View>
-					<ReanimatedSwipeable
-						renderRightActions={(progress, drag, swipeable) => (
-							<SwipeDeleteAction
-								progress={progress}
-								drag={drag}
-								swipeable={swipeable}
-								onPress={() => handleDelete(item)}
-								onAutoDelete={() => handleDelete(item)}
-							/>
-						)}
-						rightThreshold={SWIPE_DELETE_ACTION_WIDTH * 0.8}
-						overshootFriction={6}
-						friction={1.5}>
-						<EntryCard entry={item} onPress={() => router.push(ROUTES.JOURNAL_DETAIL(item.id))} />
-					</ReanimatedSwipeable>
-				</View>
-			);
+			return <EntryRow item={item} onDelete={handleDelete} />;
 		},
 		[handleDelete, styles],
 	);
@@ -212,6 +225,10 @@ export default function JournalScreen() {
 					refreshing={isRefreshing}
 					onEndReached={loadMore}
 					onEndReachedThreshold={0.4}
+					initialNumToRender={8}
+					maxToRenderPerBatch={5}
+					windowSize={5}
+					removeClippedSubviews={true}
 					contentContainerStyle={[
 						styles.listContent,
 						entries.length === 0 && !isLoading && styles.listContentEmpty,

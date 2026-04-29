@@ -5,6 +5,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	Alert,
+	InteractionManager,
 	KeyboardAvoidingView,
 	Platform,
 	Pressable,
@@ -210,6 +211,25 @@ export default function EntryDetailScreen() {
 		setCurrentEntry((prev) => (prev ? { ...prev, analysisStatus: "PROCESSING" } : prev));
 	}, [entry?.id]);
 
+	const statusColor = useMemo(() => {
+		if (!currentEntry) return colors.text.muted;
+		return (
+			({
+				PENDING: colors.text.muted,
+				PROCESSING: colors.status.info,
+				COMPLETED: colors.status.success,
+				FAILED: colors.status.error,
+			} as Record<string, string>)[currentEntry.analysisStatus] ?? colors.text.muted
+		);
+	}, [currentEntry?.analysisStatus, colors]);
+
+	// Defer WebView mount until the navigation transition is complete
+	const [editorReady, setEditorReady] = useState(false);
+	useEffect(() => {
+		const task = InteractionManager.runAfterInteractions(() => setEditorReady(true));
+		return () => task.cancel();
+	}, []);
+
 	// ── Loading / error states ────────────────────────────────────────────────
 
 	if (isLoading || (!currentEntry && !error)) {
@@ -226,14 +246,6 @@ export default function EntryDetailScreen() {
 			</ScreenWrapper>
 		);
 	}
-
-	const statusColor =
-		{
-			PENDING: colors.text.muted,
-			PROCESSING: colors.status.info,
-			COMPLETED: colors.status.success,
-			FAILED: colors.status.error,
-		}[currentEntry.analysisStatus] ?? colors.text.muted;
 
 	return (
 		<ScreenWrapper padded={false}>
@@ -331,19 +343,23 @@ export default function EntryDetailScreen() {
 						returnKeyType="next"
 					/>
 
-					{/* Content — rich text editor (FR-06) */}
-					<RichTextEditor
-						ref={editorRef}
-						initialDelta={currentEntry.content}
-						placeholder="Nội dung nhật ký..."
-						minHeight={vs(300)}
-						onChange={(delta) => {
-							deltaRef.current = delta;
-							setContentDirty(true);
-							triggerSave();
-						}}
-						onBlur={() => void triggerImmediately()}
-					/>
+					{/* Content — rich text editor (FR-06) — deferred until nav transition settles */}
+					{editorReady ? (
+						<RichTextEditor
+							ref={editorRef}
+							initialDelta={currentEntry.content}
+							placeholder="Nội dung nhật ký..."
+							minHeight={vs(300)}
+							onChange={(delta) => {
+								deltaRef.current = delta;
+								setContentDirty(true);
+								triggerSave();
+							}}
+							onBlur={() => void triggerImmediately()}
+						/>
+					) : (
+						<View style={[styles.editorPlaceholder, { minHeight: vs(300) }]} />
+					)}
 
 					{/* Tags (FR-08) — chip picker grouped by MOOD / LIFE */}
 					{(moodTags.length > 0 || lifeTags.length > 0) && (
@@ -367,22 +383,14 @@ export default function EntryDetailScreen() {
 													accessibilityLabel={`${selected ? "Bỏ chọn" : "Chọn"} thẻ ${tag.name}`}
 													style={[
 														styles.tagChip,
-														selected
-															? {
-																	backgroundColor: colors.brand.primary,
-																	borderColor: colors.brand.primary,
-																}
-															: {
-																	backgroundColor: colors.background.card,
-																	borderColor: colors.border.default,
-																},
+														selected ? styles.tagChipSelected : styles.tagChipUnselected,
 														disabled && styles.tagChipDisabled,
 													]}>
 													<Text
 														style={[
 															styles.tagChipText,
-															{ color: selected ? colors.text.inverse : colors.text.secondary },
-															disabled && { color: colors.interactive.disabled },
+															selected ? styles.tagChipTextSelected : styles.tagChipTextUnselected,
+															disabled && styles.tagChipTextDisabled,
 														]}>
 														#{tag.name}
 													</Text>
@@ -408,22 +416,14 @@ export default function EntryDetailScreen() {
 													accessibilityLabel={`${selected ? "Bỏ chọn" : "Chọn"} thẻ ${tag.name}`}
 													style={[
 														styles.tagChip,
-														selected
-															? {
-																	backgroundColor: colors.brand.primary,
-																	borderColor: colors.brand.primary,
-																}
-															: {
-																	backgroundColor: colors.background.card,
-																	borderColor: colors.border.default,
-																},
+														selected ? styles.tagChipSelected : styles.tagChipUnselected,
 														disabled && styles.tagChipDisabled,
 													]}>
 													<Text
 														style={[
 															styles.tagChipText,
-															{ color: selected ? colors.text.inverse : colors.text.secondary },
-															disabled && { color: colors.interactive.disabled },
+															selected ? styles.tagChipTextSelected : styles.tagChipTextUnselected,
+															disabled && styles.tagChipTextDisabled,
 														]}>
 														#{tag.name}
 													</Text>
@@ -506,6 +506,12 @@ function createStyles(colors: ThemeColors) {
 			paddingVertical: SPACING[8],
 			marginBottom: SPACING[8],
 		},
+		editorPlaceholder: {
+			borderWidth: 1,
+			borderColor: colors.input.border,
+			borderRadius: RADIUS.sm,
+			backgroundColor: colors.input.background,
+		},
 		tagsSection: { marginTop: SPACING[8] },
 		tagsLabel: {
 			fontSize: FONT_SIZE[13],
@@ -527,8 +533,25 @@ function createStyles(colors: ThemeColors) {
 		tagChipDisabled: {
 			opacity: 0.4,
 		},
+		tagChipSelected: {
+			backgroundColor: colors.brand.primary,
+			borderColor: colors.brand.primary,
+		},
+		tagChipUnselected: {
+			backgroundColor: colors.background.card,
+			borderColor: colors.border.default,
+		},
 		tagChipText: {
 			fontSize: FONT_SIZE[13],
+		},
+		tagChipTextSelected: {
+			color: colors.text.inverse,
+		},
+		tagChipTextUnselected: {
+			color: colors.text.secondary,
+		},
+		tagChipTextDisabled: {
+			color: colors.interactive.disabled,
 		},
 		tagGroupLabel: {
 			fontSize: FONT_SIZE[12],

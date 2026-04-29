@@ -1,0 +1,18 @@
+{
+	"order": 1,
+	"score": 0.04171853176807822,
+	"stage": null,
+	"track": {
+		"acousticness": 0.259,
+		"albumName": "Goodbye Yellow Brick Road (Remastered / Deluxe Edition)",
+		"artists": [[]],
+		"danceability": 0.665,
+		"durationMs": 322000,
+		"energy": 0.673,
+		"id": "7a908ab3-1741-4471-b97e-0405840a84d5",
+		"popularity": null,
+		"tempo": 133,
+		"trackName": "Bennie And The Jets - Remastered 2014",
+		"valence": 0.779
+	}
+}
