@@ -1,6 +1,6 @@
 // FR-06, FR-08, FR-09: Journal entry types
 
-import type { MoodTag } from "./mood-tag.types";
+import type { CatalogMoodTag } from "./mood-tag.types";
 
 export type AnalysisStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
 export type MusicStatus = "PENDING" | "GENERATING" | "COMPLETED" | "FAILED";
@@ -51,7 +51,8 @@ export interface Entry {
 	content: QuillDelta;
 	entryDate: string;
 	inputMethod: InputMethod;
-	tags: MoodTag[] | null;
+	moodTags: CatalogMoodTag[] | null;
+	lifeTags: CatalogMoodTag[] | null;
 	wordCount: number;
 	isPrivate: boolean;
 	analysisStatus: AnalysisStatus;
@@ -68,7 +69,8 @@ export interface EntryListItem {
 	preview: string;
 	entryDate: string;
 	inputMethod: InputMethod;
-	tags: MoodTag[] | null;
+	moodTags: CatalogMoodTag[] | null;
+	lifeTags: CatalogMoodTag[] | null;
 	wordCount: number;
 	isPrivate: boolean;
 	analysisStatus: AnalysisStatus;

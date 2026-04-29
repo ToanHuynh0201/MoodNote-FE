@@ -2,20 +2,16 @@
 
 import { useCallback, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import Animated, {
-	useAnimatedStyle,
-	useSharedValue,
-	withSpring,
-} from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 
+import { Badge } from "@/components/ui/display/Badge";
+import { Card } from "@/components/ui/display/Card";
+import { ANALYSIS_STATUS_LABELS } from "@/constants";
 import { useThemeColors } from "@/hooks";
 import type { ThemeColors } from "@/theme";
 import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import type { EntryListItem } from "@/types/entry.types";
-import { s, vs, formatDateWithWeekday } from "@/utils";
-import { ANALYSIS_STATUS_LABELS } from "@/constants";
-import { Badge } from "@/components/ui/display/Badge";
-import { Card } from "@/components/ui/display/Card";
+import { formatDateWithWeekday, s, vs } from "@/utils";
 
 interface Props {
 	entry: EntryListItem;
@@ -86,13 +82,13 @@ export function EntryCard({ entry, onPress }: Props) {
 					</Text>
 
 					{/* Tags */}
-					{entry.tags != null && entry.tags.length > 0 && (
+					{((entry.moodTags?.length ?? 0) > 0 || (entry.lifeTags?.length ?? 0) > 0) && (
 						<ScrollView
 							horizontal
 							showsHorizontalScrollIndicator={false}
 							style={styles.tagsScroll}
 							contentContainerStyle={styles.tagsContent}>
-							{entry.tags.map((tag) => (
+							{[...(entry.moodTags ?? []), ...(entry.lifeTags ?? [])].map((tag) => (
 								<Badge key={tag.id} label={`#${tag.name}`} size="sm" />
 							))}
 						</ScrollView>

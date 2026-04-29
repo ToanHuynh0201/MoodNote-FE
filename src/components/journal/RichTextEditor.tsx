@@ -37,12 +37,6 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, Props>(
 		const colors = useThemeColors();
 		const styles = useMemo(() => createStyles(colors), [colors]);
 
-		// Internal pell editor instance ref
-		const editorRef = useRef<RichEditor>(null);
-
-		// Track latest HTML locally so getContentHtml() can be synchronous
-		const htmlRef = useRef<string>("");
-
 		// Convert initialDelta to HTML exactly once on mount
 		// (component only mounts after entry is loaded in [id].tsx, so initialDelta is stable)
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -51,6 +45,13 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, Props>(
 			// eslint-disable-next-line react-hooks/exhaustive-deps
 			[],
 		);
+
+		// Internal pell editor instance ref
+		const editorRef = useRef<RichEditor>(null);
+
+		// Track latest HTML — seeded with initialContentHTML so saveFn content guard
+		// doesn't skip the save when the user only changes tags without typing
+		const htmlRef = useRef<string>(initialContentHTML);
 
 		// Expose a ref API for the parent saveFn to call getContentHtml()
 		useImperativeHandle(ref, () => ({

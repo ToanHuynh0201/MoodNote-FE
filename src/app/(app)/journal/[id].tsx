@@ -82,6 +82,8 @@ export default function EntryDetailScreen() {
 	// Rich text editor state — managed outside react-hook-form
 	const deltaRef = useRef<QuillDelta>({ ops: [{ insert: "\n" }] });
 	const editorRef = useRef<RichTextEditorRef>(null);
+	// Guards against resetting form state after every auto-save response
+	const hasInitialized = useRef(false);
 
 	// Available tags from store (fetched once on app mount)
 	const moodTags = useMoodTagsStore((s) => s.moodTags);
@@ -96,13 +98,14 @@ export default function EntryDetailScreen() {
 	const currentTagIds = watch("tagIds") ?? [];
 	const titleValue = watch("title") ?? "";
 
-	// Populate form and deltaRef when entry loads (use entry, not currentEntry, to avoid
-	// resetting the form mid-edit when polling updates analysis state)
+	// Populate form and deltaRef only on initial load — subsequent saves must not overwrite
+	// pending user selections made while an API call was in-flight
 	useEffect(() => {
-		if (!entry) return;
+		if (!entry || hasInitialized.current) return;
+		hasInitialized.current = true;
 		reset({
 			title: entry.title ?? "",
-			tagIds: (entry.tags ?? []).map((t) => t.id),
+			tagIds: [...(entry.moodTags ?? []), ...(entry.lifeTags ?? [])].map((t) => t.id),
 		});
 		deltaRef.current = entry.content;
 	}, [entry, reset]);
@@ -139,7 +142,7 @@ export default function EntryDetailScreen() {
 		(tagId: string) => {
 			const next = currentTagIds.includes(tagId)
 				? currentTagIds.filter((t) => t !== tagId)
-				: currentTagIds.length < 10
+				: currentTagIds.length < 5
 					? [...currentTagIds, tagId]
 					: currentTagIds;
 			setValue("tagIds", next, { shouldDirty: true });
@@ -346,7 +349,7 @@ export default function EntryDetailScreen() {
 					{(moodTags.length > 0 || lifeTags.length > 0) && (
 						<View style={styles.tagsSection}>
 							<Text style={styles.tagsLabel}>
-								Thẻ{currentTagIds.length > 0 ? ` (${currentTagIds.length}/10)` : ""}
+								Thẻ{currentTagIds.length > 0 ? ` (${currentTagIds.length}/5)` : ""}
 							</Text>
 							{moodTags.length > 0 && (
 								<>
@@ -354,7 +357,7 @@ export default function EntryDetailScreen() {
 									<View style={styles.tagsGrid}>
 										{moodTags.map((tag) => {
 											const selected = currentTagIds.includes(tag.id);
-											const disabled = !selected && currentTagIds.length >= 10;
+											const disabled = !selected && currentTagIds.length >= 5;
 											return (
 												<Pressable
 													key={tag.id}
@@ -365,8 +368,14 @@ export default function EntryDetailScreen() {
 													style={[
 														styles.tagChip,
 														selected
-															? { backgroundColor: colors.brand.primary, borderColor: colors.brand.primary }
-															: { backgroundColor: colors.background.card, borderColor: colors.border.default },
+															? {
+																	backgroundColor: colors.brand.primary,
+																	borderColor: colors.brand.primary,
+																}
+															: {
+																	backgroundColor: colors.background.card,
+																	borderColor: colors.border.default,
+																},
 														disabled && styles.tagChipDisabled,
 													]}>
 													<Text
@@ -389,7 +398,7 @@ export default function EntryDetailScreen() {
 									<View style={styles.tagsGrid}>
 										{lifeTags.map((tag) => {
 											const selected = currentTagIds.includes(tag.id);
-											const disabled = !selected && currentTagIds.length >= 10;
+											const disabled = !selected && currentTagIds.length >= 5;
 											return (
 												<Pressable
 													key={tag.id}
@@ -400,8 +409,14 @@ export default function EntryDetailScreen() {
 													style={[
 														styles.tagChip,
 														selected
-															? { backgroundColor: colors.brand.primary, borderColor: colors.brand.primary }
-															: { backgroundColor: colors.background.card, borderColor: colors.border.default },
+															? {
+																	backgroundColor: colors.brand.primary,
+																	borderColor: colors.brand.primary,
+																}
+															: {
+																	backgroundColor: colors.background.card,
+																	borderColor: colors.border.default,
+																},
 														disabled && styles.tagChipDisabled,
 													]}>
 													<Text

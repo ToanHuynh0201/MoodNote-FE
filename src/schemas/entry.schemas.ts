@@ -2,10 +2,10 @@ import { z } from "zod";
 
 // ─── Reusable field schemas ──────────────────────────────────────────────────
 
-// FR-08: max 10 tag UUIDs per entry
+// FR-08: max 5 tag UUIDs per entry
 const tagIdsSchema = z
 	.array(z.string().uuid("ID tag không hợp lệ"))
-	.max(10, "Tối đa 10 thẻ")
+	.max(5, "Tối đa 5 thẻ")
 	.default([]);
 
 const titleSchema = z.string().max(100, "Tiêu đề tối đa 100 ký tự").optional();

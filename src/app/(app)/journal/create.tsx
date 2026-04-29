@@ -91,7 +91,7 @@ export default function CreateEntryScreen() {
 		(id: string) => {
 			const next = currentTagIds.includes(id)
 				? currentTagIds.filter((t) => t !== id)
-				: currentTagIds.length < 10
+				: currentTagIds.length < 5
 					? [...currentTagIds, id]
 					: currentTagIds;
 			setValue("tagIds", next, { shouldDirty: true });
@@ -175,7 +175,7 @@ export default function CreateEntryScreen() {
 					{(moodTags.length > 0 || lifeTags.length > 0) && (
 						<View style={styles.tagsSection}>
 							<Text style={styles.tagsLabel}>
-								Thẻ{currentTagIds.length > 0 ? ` (${currentTagIds.length}/10)` : ""}
+								Thẻ{currentTagIds.length > 0 ? ` (${currentTagIds.length}/5)` : ""}
 							</Text>
 							{moodTags.length > 0 && (
 								<>
@@ -183,7 +183,7 @@ export default function CreateEntryScreen() {
 									<View style={styles.tagsGrid}>
 										{moodTags.map((tag) => {
 											const selected = currentTagIds.includes(tag.id);
-											const disabled = !selected && currentTagIds.length >= 10;
+											const disabled = !selected && currentTagIds.length >= 5;
 											return (
 												<Pressable
 													key={tag.id}
@@ -218,7 +218,7 @@ export default function CreateEntryScreen() {
 									<View style={styles.tagsGrid}>
 										{lifeTags.map((tag) => {
 											const selected = currentTagIds.includes(tag.id);
-											const disabled = !selected && currentTagIds.length >= 10;
+											const disabled = !selected && currentTagIds.length >= 5;
 											return (
 												<Pressable
 													key={tag.id}
