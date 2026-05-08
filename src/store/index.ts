@@ -3,3 +3,4 @@
 export { useAppLockStore } from "./appLock.store";
 export { useNotificationStore } from "./notification.store";
 export { useMoodTagsStore } from "./moodTags.store";
+export { usePlayerStore } from "./player.store";

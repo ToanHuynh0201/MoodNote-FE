@@ -1,10 +1,11 @@
-import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
 import { ROUTES } from "@/constants";
-import { useThemeColors } from "@/hooks";
+import { usePlayer, useThemeColors } from "@/hooks";
+import { musicService } from "@/services/music.service";
 import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import type { ThemeColors } from "@/theme";
 import type { MusicRecommendation } from "@/types/music.types";
@@ -25,14 +26,31 @@ function formatDate(iso: string): string {
 export function RecentPlaylistCard({ playlist }: Props) {
 	const colors = useThemeColors();
 	const styles = useMemo(() => createStyles(colors), [colors]);
+	const { playPlaylist } = usePlayer();
+	const [isLoadingPlay, setIsLoadingPlay] = useState(false);
 
 	const isMirror = playlist.mode === "MIRROR";
 	const badgeBg = isMirror ? colors.brand.surface : colors.status.warningBackground;
 	const badgeText = isMirror ? colors.brand.primary : colors.status.warning;
 
-	function handlePress() {
+	const handlePress = useCallback(() => {
 		router.push(ROUTES.JOURNAL_DETAIL(playlist.entryId));
-	}
+	}, [playlist.entryId]);
+
+	const handlePlay = useCallback(async () => {
+		setIsLoadingPlay(true);
+		try {
+			const res = await musicService.getByEntry(playlist.entryId);
+			if (res.success && res.data?.recommendation) {
+				await playPlaylist(
+					res.data.recommendation.tracks.map((t) => t.track),
+					playlist.entryId,
+				);
+			}
+		} finally {
+			setIsLoadingPlay(false);
+		}
+	}, [playlist.entryId, playPlaylist]);
 
 	return (
 		<Pressable style={styles.card} onPress={handlePress}>
@@ -51,11 +69,25 @@ export function RecentPlaylistCard({ playlist }: Props) {
 				</Text>
 			</View>
 
-			{/* Right: mode badge + chevron */}
+			{/* Right: mode badge + play + chevron */}
 			<View style={styles.right}>
 				<View style={[styles.badge, { backgroundColor: badgeBg }]}>
 					<Text style={[styles.badgeText, { color: badgeText }]}>{playlist.mode}</Text>
 				</View>
+				<Pressable
+					onPress={(e) => {
+						e.stopPropagation();
+						void handlePlay();
+					}}
+					hitSlop={8}
+					accessibilityRole="button"
+					accessibilityLabel="Phát playlist">
+					{isLoadingPlay ? (
+						<ActivityIndicator size="small" color={colors.brand.primary} />
+					) : (
+						<Ionicons name="play-circle-outline" size={s(24)} color={colors.brand.primary} />
+					)}
+				</Pressable>
 				<Ionicons name="chevron-forward" size={s(16)} color={colors.text.muted} />
 			</View>
 		</Pressable>

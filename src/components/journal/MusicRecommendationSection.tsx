@@ -22,7 +22,7 @@ import Animated, {
 
 import { PlaylistTrackItem } from "@/components/home/PlaylistTrackItem";
 import { SkeletonLoader } from "@/components/ui/feedback";
-import { useEntryRecommendation, useThemeColors } from "@/hooks";
+import { useEntryRecommendation, usePlayer, useThemeColors } from "@/hooks";
 import type { ThemeColors } from "@/theme";
 import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import type { MusicStatus } from "@/types/entry.types";
@@ -57,10 +57,19 @@ export function MusicRecommendationSection({ entryId, musicStatus }: Props) {
 		entryId,
 		musicStatus,
 	);
+	const { playPlaylist } = usePlayer();
 
 	const handleRefresh = useCallback(() => {
 		void refresh();
 	}, [refresh]);
+
+	const handlePlay = useCallback(() => {
+		if (!recommendation) return;
+		void playPlaylist(
+			recommendation.tracks.map((t) => t.track),
+			entryId,
+		);
+	}, [recommendation, entryId, playPlaylist]);
 
 	const [isExpanded, setIsExpanded] = useState(false);
 	const expandProgress = useSharedValue(0);
@@ -198,6 +207,13 @@ export function MusicRecommendationSection({ entryId, musicStatus }: Props) {
 									<Text style={styles.modeText}>{recommendation.diagnostics.moodKey}</Text>
 								</View>
 							)}
+							<Pressable
+								onPress={handlePlay}
+								hitSlop={8}
+								accessibilityRole="button"
+								accessibilityLabel="Phát playlist">
+								<Ionicons name="play-circle-outline" size={s(20)} color={colors.brand.primary} />
+							</Pressable>
 							<Pressable
 								onPress={handleRefresh}
 								hitSlop={8}

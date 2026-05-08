@@ -18,6 +18,7 @@ export interface TrackSimple {
 	trackName: string;
 	albumName: string | null;
 	durationMs: number | null;
+	previewUrl: string | null;
 	artists: { name: string }[];
 }
 

@@ -1,21 +1,31 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AppStateStatus } from "react-native";
 import { AppState, Pressable, StyleSheet, View } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, {
+	cancelAnimation,
+	Easing,
+	useAnimatedStyle,
+	useSharedValue,
+	withRepeat,
+	withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BAR_HEIGHT, FAB_SIZE } from "@/constants";
-import { useThemeColors, useThemeContext } from "@/hooks";
+import { usePlayer, useThemeColors, useThemeContext } from "@/hooks";
 import { notificationService } from "@/services/notification.service";
 import { useNotificationStore } from "@/store";
 import type { ThemeColors } from "@/theme";
 import { RADIUS, SPACING } from "@/theme";
 import { s, vs } from "@/utils";
-import { AddJournalMenu } from "./AddJournalMenu";
+import { MusicPlayerPanel } from "./MusicPlayerPanel";
 import { TabItem } from "./TabItem";
+
+const BORDER_W = 3;
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 	const colors = useThemeColors();
@@ -46,9 +56,11 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 		return () => sub.remove();
 	}, [refreshUnreadCount]);
 
+	const { isPlaying } = usePlayer();
+
 	const [menuOpen, setMenuOpen] = useState(false);
 
-	// Reanimated cross-fade: 0 = "+" visible, 1 = "≡" visible
+	// Cross-fade between "+" and "≡" icons
 	const progress = useSharedValue(0);
 
 	const addIconStyle = useAnimatedStyle(() => ({
@@ -59,6 +71,26 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 	const menuIconStyle = useAnimatedStyle(() => ({
 		opacity: progress.value,
 		transform: [{ scale: 0.85 + progress.value * 0.15 }],
+	}));
+
+	// Spinning border when music is playing
+	const rotation = useSharedValue(0);
+
+	useEffect(() => {
+		if (isPlaying) {
+			rotation.value = withRepeat(
+				withTiming(360, { duration: 2000, easing: Easing.linear }),
+				-1,
+				false,
+			);
+		} else {
+			cancelAnimation(rotation);
+			rotation.value = 0;
+		}
+	}, [isPlaying, rotation]);
+
+	const spinStyle = useAnimatedStyle(() => ({
+		transform: [{ rotate: `${rotation.value}deg` }],
 	}));
 
 	const handleFabPress = useCallback(() => {
@@ -110,7 +142,6 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
 	return (
 		<>
-			{/* Transparent full-screen dismiss layer — captures taps outside popup */}
 			{menuOpen && (
 				<Pressable
 					style={StyleSheet.absoluteFillObject}
@@ -119,51 +150,59 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 				/>
 			)}
 
-			{/* Floating tab bar wrapper — positions bar above safe area */}
 			<View style={styles.wrapper} pointerEvents="box-none">
-				{/* BlurView for liquid glass effect */}
 				<BlurView
 					intensity={60}
 					tint={colorScheme === "dark" ? "dark" : "light"}
 					style={styles.blurContainer}>
-					{/* Semi-transparent overlay for glass tint */}
 					<View style={styles.overlay}>
-						{/* Left tabs */}
 						{leftTabs.map((route, i) => renderTab(route, i, 0))}
-
-						{/* Center spacer (for FAB) */}
 						<View style={styles.fabSpacer} />
-
-						{/* Right tabs */}
 						{rightTabs.map((route, i) => renderTab(route, i, 2))}
 					</View>
 				</BlurView>
 
-				{/* FAB button — absolutely positioned above the bar */}
-				<Pressable
-					style={styles.fab}
-					onPress={handleFabPress}
-					accessibilityLabel={menuOpen ? "Đóng menu" : "Thêm nhật ký"}
-					accessibilityRole="button"
-					hitSlop={8}>
-					{/* "+" icon */}
-					<Animated.View style={[StyleSheet.absoluteFill, styles.fabIconCenter, addIconStyle]}>
-						<Ionicons name="add" size={s(28)} color={colors.text.inverse} />
-					</Animated.View>
-					{/* "≡" icon */}
-					<Animated.View style={[StyleSheet.absoluteFill, styles.fabIconCenter, menuIconStyle]}>
-						<Ionicons name="reorder-three" size={s(28)} color={colors.text.inverse} />
-					</Animated.View>
-				</Pressable>
+				{/* FAB group — spinning gradient ring + inner button */}
+				<View style={styles.fabGroup}>
+					{isPlaying && (
+						<Animated.View style={[StyleSheet.absoluteFill, spinStyle]}>
+							<LinearGradient
+								colors={[
+									colors.brand.primary,
+									colors.brand.highlight,
+									colors.brand.secondary,
+									colors.brand.primary,
+								]}
+								start={{ x: 0, y: 0 }}
+								end={{ x: 1, y: 1 }}
+								style={[StyleSheet.absoluteFill, styles.gradientRing]}
+							/>
+						</Animated.View>
+					)}
 
-				{/* Popup menu — inline, positioned above the FAB */}
-				<AddJournalMenu visible={menuOpen} onDismiss={handleMenuDismiss} />
+					<Pressable
+						style={styles.fab}
+						onPress={handleFabPress}
+						accessibilityLabel={menuOpen ? "Đóng player" : "Mở player nhạc"}
+						accessibilityRole="button"
+						hitSlop={8}>
+						<Animated.View style={[StyleSheet.absoluteFill, styles.fabIconCenter, addIconStyle]}>
+							<Ionicons name="add" size={s(28)} color={colors.text.inverse} />
+						</Animated.View>
+						<Animated.View style={[StyleSheet.absoluteFill, styles.fabIconCenter, menuIconStyle]}>
+							<Ionicons name="reorder-three" size={s(28)} color={colors.text.inverse} />
+						</Animated.View>
+					</Pressable>
+				</View>
+
+				<MusicPlayerPanel visible={menuOpen} />
 			</View>
 		</>
 	);
 }
 
 function createStyles(colors: ThemeColors, bottomInset: number) {
+	const outerSize = FAB_SIZE + BORDER_W * 2;
 	return StyleSheet.create({
 		wrapper: {
 			position: "absolute",
@@ -176,7 +215,6 @@ function createStyles(colors: ThemeColors, bottomInset: number) {
 			width: "100%",
 			borderRadius: RADIUS.xl,
 			overflow: "hidden",
-			// Shadow / elevation for floating effect
 			shadowColor: colors.shadow,
 			shadowOffset: { width: 0, height: vs(8) },
 			shadowOpacity: 0.4,
@@ -193,14 +231,23 @@ function createStyles(colors: ThemeColors, bottomInset: number) {
 		fabSpacer: {
 			width: FAB_SIZE + SPACING[8],
 		},
-		fab: {
+		fabGroup: {
 			position: "absolute",
-			top: -(FAB_SIZE / 2 - vs(8)),
+			top: -(outerSize / 2 - vs(8)),
+			width: outerSize,
+			height: outerSize,
+			borderRadius: RADIUS.full,
+			alignItems: "center",
+			justifyContent: "center",
+		},
+		gradientRing: {
+			borderRadius: RADIUS.full,
+		},
+		fab: {
 			width: FAB_SIZE,
 			height: FAB_SIZE,
 			borderRadius: RADIUS.full,
 			backgroundColor: colors.brand.primary,
-			// Shadow
 			shadowColor: colors.brand.primary,
 			shadowOffset: { width: 0, height: vs(4) },
 			shadowOpacity: 0.5,
