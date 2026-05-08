@@ -2,7 +2,7 @@ import { Avatar, Badge, Button, ScreenWrapper, ToggleSwitch } from "@/components
 import { Divider } from "@/components/ui/display/Divider";
 import { Input } from "@/components/ui/inputs/Input";
 import { ROUTES } from "@/constants";
-import { useAuth, useForm, useThemeColors, useThemeContext } from "@/hooks";
+import { useAuth, useForm, useThemeColors, useThemeContext, useUserSettings } from "@/hooks";
 import { updateProfileSchema } from "@/schemas";
 import { userService } from "@/services";
 import { useNotificationStore } from "@/store";
@@ -36,6 +36,7 @@ export default function ProfileScreen() {
 	const unreadCount = useNotificationStore((s) => s.unreadCount);
 	const { user, logout, updateUser } = useAuth();
 	const { colorScheme, toggleTheme } = useThemeContext();
+	const { allowTrainingData, isSaving: isSavingSettings, updateAllowTrainingData } = useUserSettings();
 	const [isEditing, setIsEditing] = useState(false);
 
 	// ── Data portability state (NFR-11) ─────────────────────────────────────
@@ -262,6 +263,14 @@ export default function ProfileScreen() {
 						</View>
 						<Ionicons name="chevron-forward" size={s(16)} color={colors.text.muted} />
 					</Pressable>
+					<Divider />
+					<ToggleSwitch
+						label="Đóng góp dữ liệu AI"
+						sublabel="Gửi nhật ký ẩn danh để cải thiện phân tích cảm xúc"
+						value={allowTrainingData}
+						onValueChange={(v) => void updateAllowTrainingData(v)}
+						disabled={isSavingSettings}
+					/>
 				</View>
 
 				{/* Data portability (NFR-11) */}

@@ -15,6 +15,7 @@ export { useEntryRecommendation } from "./useEntryRecommendation";
 export { useEmotionChart } from "./useEmotionChart";
 export { useKeywordStats } from "./useKeywordStats";
 export { usePatterns } from "./usePatterns";
+export { useUserSettings } from "./useUserSettings";
 
 // Re-export hook-related types from @/types for convenience
 export type { UseFormOptions, UseFormResult } from "@/types/form.types";

@@ -82,12 +82,14 @@ export interface DeleteAccountPayload {
 export interface UserSettings {
 	theme: ThemePreference;
 	language: string;
+	allowTrainingData: boolean;
 	updatedAt: string;
 }
 
 export interface UpdateSettingsPayload {
 	theme?: ThemePreference;
 	language?: string;
+	allowTrainingData?: boolean;
 }
 
 // NFR-11: Data portability — export/import
