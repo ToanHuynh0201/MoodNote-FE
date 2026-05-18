@@ -45,17 +45,21 @@ import type { QuillDelta } from "@/types/entry.types";
 import { htmlToText, s, vs } from "@/utils";
 
 export default function EntryDetailScreen() {
-	const { id } = useLocalSearchParams<{ id: string }>();
+	const { id } = useLocalSearchParams<{ id?: string }>();
 	const colors = useThemeColors();
 	const styles = useMemo(() => createStyles(colors), [colors]);
 
-	const { entry, isLoading, error, updateEntry, deleteEntry } = useEntry(id);
+	useEffect(() => {
+		if (!id) router.back();
+	}, [id]);
+
+	const { entry, isLoading, error, updateEntry, deleteEntry } = useEntry(id ?? "");
 
 	// currentEntry tracks the displayed entry — starts from `entry`, updated by polling
 	const [currentEntry, setCurrentEntry] = useState(entry);
 	useEffect(() => {
-		if (entry) setCurrentEntry(entry);
-	}, [entry]);
+		if (entry && !currentEntry) setCurrentEntry(entry);
+	}, [entry, currentEntry]);
 
 	const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
 	const expandProgress = useSharedValue(0);
@@ -233,7 +237,7 @@ export default function EntryDetailScreen() {
 
 	// ── Loading / error states ────────────────────────────────────────────────
 
-	if (isLoading || (!currentEntry && !error)) {
+	if (!id || isLoading || (!currentEntry && !error)) {
 		return <EntryDetailSkeleton />;
 	}
 

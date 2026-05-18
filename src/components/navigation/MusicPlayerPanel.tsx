@@ -6,7 +6,6 @@ import Animated, {
 	Easing,
 	useAnimatedStyle,
 	useSharedValue,
-	withRepeat,
 	withTiming,
 } from "react-native-reanimated";
 
@@ -15,53 +14,10 @@ import { usePlayer, useThemeColors } from "@/hooks";
 import type { ThemeColors } from "@/theme";
 import { FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from "@/theme";
 import { s, vs } from "@/utils";
+import { WaveformBars } from "./WaveformBars";
 
 interface Props {
 	visible: boolean;
-}
-
-function WaveformBars({ isPlaying, color }: { isPlaying: boolean; color: string }) {
-	const h1 = useSharedValue(vs(4));
-	const h2 = useSharedValue(vs(4));
-	const h3 = useSharedValue(vs(4));
-
-	const anim1 = useAnimatedStyle(() => ({ height: h1.value }));
-	const anim2 = useAnimatedStyle(() => ({ height: h2.value }));
-	const anim3 = useAnimatedStyle(() => ({ height: h3.value }));
-
-	useEffect(() => {
-		if (isPlaying) {
-			h1.value = withRepeat(
-				withTiming(vs(13), { duration: 500, easing: Easing.inOut(Easing.sin) }),
-				-1,
-				true,
-			);
-			h2.value = withRepeat(
-				withTiming(vs(18), { duration: 750, easing: Easing.inOut(Easing.sin) }),
-				-1,
-				true,
-			);
-			h3.value = withRepeat(
-				withTiming(vs(10), { duration: 600, easing: Easing.inOut(Easing.sin) }),
-				-1,
-				true,
-			);
-		} else {
-			h1.value = withTiming(vs(4));
-			h2.value = withTiming(vs(4));
-			h3.value = withTiming(vs(4));
-		}
-	}, [isPlaying, h1, h2, h3]);
-
-	const barStyle = { width: s(3), borderRadius: s(2), backgroundColor: color, opacity: 0.8 };
-
-	return (
-		<View style={{ flexDirection: "row", alignItems: "flex-end", gap: s(2), height: vs(18) }}>
-			<Animated.View style={[barStyle, anim1]} />
-			<Animated.View style={[barStyle, anim2]} />
-			<Animated.View style={[barStyle, anim3]} />
-		</View>
-	);
 }
 
 export function MusicPlayerPanel({ visible }: Props) {
@@ -131,7 +87,7 @@ export function MusicPlayerPanel({ visible }: Props) {
 							<View style={styles.artistRow}>
 								<WaveformBars isPlaying={isPlaying} color={colors.text.inverse} />
 								<Text style={styles.artistName} numberOfLines={1}>
-									{currentTrack.artists.join(" · ")}
+									{currentTrack.artists?.join(" · ") ?? ""}
 								</Text>
 							</View>
 							<Text style={styles.trackCounter}>

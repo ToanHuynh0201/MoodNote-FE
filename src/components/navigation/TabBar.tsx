@@ -9,6 +9,7 @@ import Animated, {
 	cancelAnimation,
 	Easing,
 	useAnimatedStyle,
+	useDerivedValue,
 	useSharedValue,
 	withRepeat,
 	withTiming,
@@ -24,6 +25,7 @@ import { RADIUS, SPACING } from "@/theme";
 import { s, vs } from "@/utils";
 import { MusicPlayerPanel } from "./MusicPlayerPanel";
 import { TabItem } from "./TabItem";
+import { WaveformBars } from "./WaveformBars";
 
 const BORDER_W = 3;
 
@@ -60,17 +62,36 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
 	const [menuOpen, setMenuOpen] = useState(false);
 
-	// Cross-fade between "+" and "≡" icons
+	// Menu toggle progress: 0 = closed, 1 = open
 	const progress = useSharedValue(0);
+	// Music playing progress: 0 = not playing, 1 = playing
+	const musicProgress = useSharedValue(0);
 
-	const addIconStyle = useAnimatedStyle(() => ({
-		opacity: 1 - progress.value,
-		transform: [{ scale: 1 - progress.value * 0.15 }],
+	useEffect(() => {
+		musicProgress.value = withTiming(isPlaying ? 1 : 0, { duration: 200 });
+	}, [isPlaying, musicProgress]);
+
+	const noteOpacity = useDerivedValue(
+		() => (1 - progress.value) * (1 - musicProgress.value),
+	);
+	const menuIconOpacity = useDerivedValue(
+		() => progress.value * (1 - musicProgress.value),
+	);
+	const waveOpacity = useDerivedValue(() => musicProgress.value);
+
+	const noteIconStyle = useAnimatedStyle(() => ({
+		opacity: noteOpacity.value,
+		transform: [{ scale: 0.85 + noteOpacity.value * 0.15 }],
 	}));
 
 	const menuIconStyle = useAnimatedStyle(() => ({
-		opacity: progress.value,
-		transform: [{ scale: 0.85 + progress.value * 0.15 }],
+		opacity: menuIconOpacity.value,
+		transform: [{ scale: 0.85 + menuIconOpacity.value * 0.15 }],
+	}));
+
+	const waveformStyle = useAnimatedStyle(() => ({
+		opacity: waveOpacity.value,
+		transform: [{ scale: 0.85 + waveOpacity.value * 0.15 }],
 	}));
 
 	// Spinning border when music is playing
@@ -104,8 +125,9 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 		setMenuOpen(false);
 	}, [progress]);
 
-	const leftTabs = state.routes.slice(0, 2);
-	const rightTabs = state.routes.slice(2, 4);
+	const midpoint = Math.floor(state.routes.length / 2);
+	const leftTabs = state.routes.slice(0, midpoint);
+	const rightTabs = state.routes.slice(midpoint);
 
 	function renderTab(route: (typeof state.routes)[number], index: number, offset: number) {
 		const descriptor = descriptors[route.key];
@@ -158,7 +180,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 					<View style={styles.overlay}>
 						{leftTabs.map((route, i) => renderTab(route, i, 0))}
 						<View style={styles.fabSpacer} />
-						{rightTabs.map((route, i) => renderTab(route, i, 2))}
+						{rightTabs.map((route, i) => renderTab(route, i, midpoint))}
 					</View>
 				</BlurView>
 
@@ -186,11 +208,14 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 						accessibilityLabel={menuOpen ? "Đóng player" : "Mở player nhạc"}
 						accessibilityRole="button"
 						hitSlop={8}>
-						<Animated.View style={[StyleSheet.absoluteFill, styles.fabIconCenter, addIconStyle]}>
-							<Ionicons name="add" size={s(28)} color={colors.text.inverse} />
+						<Animated.View style={[StyleSheet.absoluteFill, styles.fabIconCenter, noteIconStyle]}>
+							<Ionicons name="musical-note" size={s(24)} color={colors.text.inverse} />
 						</Animated.View>
 						<Animated.View style={[StyleSheet.absoluteFill, styles.fabIconCenter, menuIconStyle]}>
 							<Ionicons name="reorder-three" size={s(28)} color={colors.text.inverse} />
+						</Animated.View>
+						<Animated.View style={[StyleSheet.absoluteFill, styles.fabIconCenter, waveformStyle]}>
+							<WaveformBars isPlaying={isPlaying} color={colors.text.inverse} size="sm" />
 						</Animated.View>
 					</Pressable>
 				</View>

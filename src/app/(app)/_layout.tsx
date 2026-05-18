@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 import { LockScreen } from "@/components/appLock";
 import { ProtectedRoute } from "@/components/navigation";
-import { NotificationPopupProvider, useNotificationPopup } from "@/components/ui/feedback";
+import { NotificationPopupProvider, ToastProvider, useNotificationPopup } from "@/components/ui/feedback";
 import { ROUTES } from "@/constants";
 import { getInitialNotification, getMessaging, onMessage, onNotificationOpenedApp } from "@react-native-firebase/messaging";
 import { useAppLockStore, useMoodTagsStore, useNotificationStore } from "@/store";
@@ -99,7 +99,9 @@ export default function AppLayout() {
 	return (
 		<ProtectedRoute>
 			<NotificationPopupProvider>
-				<AppContent />
+				<ToastProvider>
+					<AppContent />
+				</ToastProvider>
 			</NotificationPopupProvider>
 		</ProtectedRoute>
 	);

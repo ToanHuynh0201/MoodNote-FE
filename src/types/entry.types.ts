@@ -128,7 +128,7 @@ export interface UseEntriesResult {
 	error: string | null;
 	refresh: () => Promise<void>;
 	loadMore: () => Promise<void>;
-	removeEntry: (id: string) => Promise<void>;
+	removeEntry: (id: string) => Promise<{ success: boolean }>;
 }
 
 export interface UseEntryResult {

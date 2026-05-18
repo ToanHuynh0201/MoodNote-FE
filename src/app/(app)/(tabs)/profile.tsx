@@ -29,6 +29,8 @@ import {
 	View,
 } from "react-native";
 
+const MAX_BADGE_DISPLAY = 99;
+
 // FR-05: Profile / settings screen
 export default function ProfileScreen() {
 	const colors = useThemeColors();
@@ -170,7 +172,7 @@ export default function ProfileScreen() {
 					</View>
 
 					<Button
-						title={isEditing ? "Cancel" : "Edit Profile"}
+						title={isEditing ? "Huỷ" : "Chỉnh sửa hồ sơ"}
 						variant={isEditing ? "ghost" : "outline"}
 						size="sm"
 						onPress={handleEditToggle}
@@ -179,22 +181,22 @@ export default function ProfileScreen() {
 					{isEditing && (
 						<View style={styles.form}>
 							<Input
-								label="Display Name"
-								placeholder="Your full name"
+								label="Tên hiển thị"
+								placeholder="Tên đầy đủ của bạn"
 								autoCapitalize="words"
 								autoCorrect={false}
 								{...getFieldProps("name")}
 							/>
 							<Input
-								label="Username"
-								placeholder="your_username"
+								label="Tên người dùng"
+								placeholder="ten_nguoi_dung"
 								autoCapitalize="none"
 								autoCorrect={false}
 								{...getFieldProps("username")}
 							/>
 							{serverError != null && <Text style={styles.serverError}>{serverError}</Text>}
 							<Button
-								title="Save Changes"
+								title="Lưu thay đổi"
 								variant="primary"
 								fullWidth
 								loading={isSubmitting}
@@ -229,7 +231,7 @@ export default function ProfileScreen() {
 							{unreadCount > 0 && (
 								<View style={styles.notifBadge}>
 									<Text style={styles.notifBadgeText}>
-										{unreadCount > 99 ? "99+" : unreadCount}
+										{unreadCount > MAX_BADGE_DISPLAY ? `${MAX_BADGE_DISPLAY}+` : unreadCount}
 									</Text>
 								</View>
 							)}

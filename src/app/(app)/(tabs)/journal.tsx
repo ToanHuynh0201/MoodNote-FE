@@ -2,8 +2,8 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import { memo, useCallback, useMemo, useRef } from "react";
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import ReanimatedSwipeable, {
 	type SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
@@ -17,7 +17,9 @@ import Animated, {
 
 import { EntryCard, JournalListSkeleton } from "@/components/journal";
 import { ScreenWrapper } from "@/components/layout/ScreenWrapper";
+import { ConfirmationDialog } from "@/components/ui";
 import { EmptyState } from "@/components/ui/feedback/EmptyState";
+import { useToast } from "@/components/ui/feedback";
 import { JournalIllustration } from "@/components/ui/illustrations/JournalIllustration";
 import { ROUTES, SWIPE_DELETE_ACTION_WIDTH, SWIPE_DELETE_AUTO_DRAG_THRESHOLD } from "@/constants";
 import { useEntries, useThemeColors } from "@/hooks";
@@ -145,6 +147,9 @@ export default function JournalScreen() {
 	const colors = useThemeColors();
 	const styles = useMemo(() => createStyles(colors), [colors]);
 	const { entries, isLoading, isRefreshing, loadMore, refresh, removeEntry } = useEntries();
+	const { show: showToast } = useToast();
+
+	const [deleteTarget, setDeleteTarget] = useState<EntryListItem | null>(null);
 
 	const isFirstFocus = useRef(true);
 	useFocusEffect(
@@ -171,19 +176,19 @@ export default function JournalScreen() {
 		return rows;
 	}, [entries]);
 
-	const handleDelete = useCallback(
-		(item: EntryListItem) => {
-			Alert.alert("Xoá nhật ký", "Bạn có chắc muốn xoá nhật ký này? Thao tác không thể hoàn tác.", [
-				{ text: "Huỷ", style: "cancel" },
-				{
-					text: "Xoá",
-					style: "destructive",
-					onPress: () => void removeEntry(item.id),
-				},
-			]);
-		},
-		[removeEntry],
-	);
+	const handleDelete = useCallback((item: EntryListItem) => {
+		setDeleteTarget(item);
+	}, []);
+
+	const handleConfirmDelete = useCallback(async () => {
+		if (!deleteTarget) return;
+		const target = deleteTarget;
+		setDeleteTarget(null);
+		const result = await removeEntry(target.id);
+		if (!result.success) {
+			showToast({ message: "Xoá thất bại. Vui lòng thử lại.", type: "error" });
+		}
+	}, [deleteTarget, removeEntry, showToast]);
 
 	const renderItem = useCallback(
 		({ item }: { item: ListRow }) => {
@@ -247,6 +252,16 @@ export default function JournalScreen() {
 					showsVerticalScrollIndicator={false}
 				/>
 			</View>
+
+			<ConfirmationDialog
+				visible={!!deleteTarget}
+				title="Xoá nhật ký?"
+				message="Bạn có chắc muốn xoá nhật ký này? Thao tác không thể hoàn tác."
+				confirmLabel="Xoá"
+				confirmVariant="danger"
+				onConfirm={() => void handleConfirmDelete()}
+				onCancel={() => setDeleteTarget(null)}
+			/>
 		</ScreenWrapper>
 	);
 }

@@ -66,12 +66,13 @@ export function useEntries(): UseEntriesResult {
 		}
 	}, [isLoadingMore, pagination, fetchPage]);
 
-	const removeEntry = useCallback(async (id: string) => {
+	const removeEntry = useCallback(async (id: string): Promise<{ success: boolean }> => {
 		setEntries((prev) => prev.filter((e) => e.id !== id));
 		const result = await entryService.delete(id);
 		if (!result.success) {
 			logError(result.error, { context: "useEntries.removeEntry" });
 		}
+		return { success: result.success };
 	}, []);
 
 	return {
